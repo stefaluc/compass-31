@@ -269,7 +269,7 @@ export const theme = createTheme({
         "contrastText": "rgba(0, 0, 0, 0.87)"
       },
       "secondary": {
-        "main": "#9c27b0",
+        "main": "#230870",
         "light": "#ba68c8",
         "dark": "#7b1fa2",
         "contrastText": "#fff"

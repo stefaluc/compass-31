@@ -1,9 +1,10 @@
 .box {
   border: 1px solid rgba(153,152,152,0.405);
-  width: 900px;
+  width: 50vw;
   border-radius: 4px;
   padding: 50px;
   margin-top: 10px;
+  margin-bottom: 30px;
 }
 .button {
   display: flex;
@@ -21,5 +22,10 @@
   display: flex;
   justify-content: flex-end;
   margin-top: 5px;
-  font-size: 1.24em;
+  font-size: 1.4em;
+  transition: all 0.3s ease;
+}
+
+.emphasized {
+  font-weight: bold;
 }

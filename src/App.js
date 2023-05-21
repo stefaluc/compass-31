@@ -1,3 +1,4 @@
+import LinearProgress from '@mui/material/LinearProgress';
 import TextField from '@mui/material/TextField';
 
 import React from 'react';
@@ -5,10 +6,38 @@ import './App.css';
 import { Button, Divider, Typography } from '@mui/material';
 import { data } from './data';
 
+const calcIsOutOfRange = (question) => (
+  question.value != null &&
+  (question.value <= 0 ||
+  question.value > question.pointsKey.length)
+);
+
+const calcIsInRange = (question) => (
+  question.value != null &&
+  (question.value > 0 &&
+  question.value <= question.pointsKey.length)
+);
+
+const countQuestionsDone = (questionList) => {
+  let questionCount = 0;
+
+  for (const question of questionList) {
+    if (calcIsInRange(question)) {
+      questionCount++;
+    }
+  }
+
+  return questionCount;
+}
+
 function App() {
   const [formData, setFormData] = React.useState(data);
   const [orthoCount, setOrthoCount] = React.useState(0);
   const [orthoScore, setOrthoScore] = React.useState(0);
+  const [emphasized, setEmphasized] = React.useState(false);
+
+  const numQuestions = data.reduce((count, item) => count + item.questions.length, 0);
+  const numQuestionsDone = countQuestionsDone(formData.flatMap(item => item.questions));
 
   React.useEffect(() => {
     let intervalId;
@@ -28,7 +57,21 @@ function App() {
     return () => clearInterval(intervalId);
   }, [orthoCount, orthoScore]); 
 
+  // React.useEffect(() => {
+  //     setEmphasized(true);
+  //     setTimeout(() => {
+  //       setEmphasized(false);
+  //     }, 500);
+  // }, [formData]);
+
   return (
+    <>
+      <LinearProgress 
+        sx={{width: '100vw', position: 'fixed', left: 0, top: 0, zIndex: '9999'}}
+        variant="determinate"
+        value={(numQuestionsDone / numQuestions) * 100}
+        color="secondary"
+      />
     <div className="App">
       <h2><span className='title'>COMPASS-31</span>&nbsp; The Composite Autonomic Symptom Score</h2>
       <div>
@@ -36,7 +79,11 @@ function App() {
           Input the patient's selected answer number for each question to calculate the final scores.
         </Typography>
       </div>
-      {formData.map((item, i) => (
+      {formData.map((item, i) => {
+        const numQuestionsDoneInSection = countQuestionsDone(item.questions);
+        const areAllQuestionsDone = numQuestionsDoneInSection === item.questions.length;
+
+        return (
         <>
           <div key={item.id} className="box">
             <h3>{item.domain}</h3>
@@ -44,20 +91,15 @@ function App() {
             <ol>
               {item.questions.map((question, j) => {
                 const key = `d${item.id.toString()}q${question.id.toString()}`;
-                const isOutOfRange = (
-                  question.value != null &&
-                  (question.value <= 0 ||
-                  question.value > question.pointsKey.length)
-                );
+                const isOutOfRange = calcIsOutOfRange(question);
 
                 return (
-                  <li key={key}>
+                  <li key={key} value={question.id}>
                     <Typography>{question.questionText}</Typography>
                     <TextField
                       error={isOutOfRange}
                       type='number'
                       sx={{ marginTop: '5px' }}
-                      value={question.value}
                       onChange={(e) => {
                         const newQuestions = [
                           ...item.questions.slice(0, j),
@@ -94,14 +136,17 @@ function App() {
                 )
               })}
             </ol>
+            <div className={`score ${areAllQuestionsDone ? 'emphasized' : ''}`}>
+              {item.currentScore}&nbsp;/&nbsp;{item.maxScore}
+            </div>
           </div>
-          <div className='score'>{item.currentScore} / {item.maxScore}</div>
         </>
-      ))}
+      )})}
       <div className="button">
-        <Button sx={{ margin: 10, width: '200px', height: '50px' }} variant='contained'>Calculate Score</Button>
+        <Button sx={{ margin: 10, width: '200px', height: '50px' }} variant='contained' color="secondary">Calculate Score</Button>
       </div>
     </div>
+    </>
   );
 }
 
