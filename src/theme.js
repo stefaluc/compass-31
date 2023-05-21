@@ -274,6 +274,9 @@ export const theme = createTheme({
         "dark": "#7b1fa2",
         "contrastText": "#fff"
       },
+      "tertiary": {
+        main: '#666',
+      },
       "info": {
         "main": "#0288d1",
         "light": "#03a9f4",

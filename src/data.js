@@ -4,30 +4,35 @@ export const data = [
     domain: 'Orthostatic Intolerance',
     currentScore: 0,
     maxScore: 10,
+    multiplier: 4,
     questions: [
       {
         id: 1,
         questionText: `In the past year, have you ever felt faint, dizzy, “goofy”, or had difficulty thinking soon after standing up from a sitting or lying position?`,
         value: null,
         pointsKey: [1, 0],
+        dependentAnswer: 2,
       },
       {
         id: 2,
         questionText: `When standing up, how frequently do you get these feelings or symptoms?`,
         value: null,
         pointsKey: [0, 1, 2, 3],
+        dependent: 1,
       },
       {
         id: 3,
         questionText: `How would you rate the severity of these feelings or symptoms?`,
         value: null,
         pointsKey: [1, 2, 3],
+        dependent: 1,
       },
       {
         id: 4,
         questionText: `In the past year, have these feelings or symptoms that you have experienced:`,
         value: null,
         pointsKey: [3, 2, 1, 0, 0, 0],
+        dependent: 1,
       },
     ],
   },
@@ -36,24 +41,29 @@ export const data = [
     domain: 'Vasomotor',
     maxScore: 5,
     currentScore: 0,
+    multiplier: 0.8333,
     questions: [
       {
         id: 5,
         questionText: `In the past year, have you ever noticed color changes in your skin, such as red, white, or purple?`,
         value: null,
         pointsKey: [1, 0],
+        dependentAnswer: 2,
       },
       {
         id: 6,
         questionText: `What parts of your body are affected by these color changes? (Check all that apply)`,
         value: null,
-        pointsKey: [1, 1],
+        pointsKey: [0, 1, 2],
+        type: 'checkmark',
+        dependent: 5,
       },
       {
         id: 7,
         questionText: `Are these changes in your skin color:`,
         value: null,
         pointsKey: [3, 2, 1, 0],
+        dependent: 5,
       },
     ],
   },
@@ -62,6 +72,7 @@ export const data = [
     domain: 'Secretomotor',
     maxScore: 7,
     currentScore: 0,
+    multiplier: 2.1428571,
     questions: [
       {
         id: 8,
@@ -94,6 +105,7 @@ export const data = [
     domain: 'Gastrointenstinal',
     maxScore: 28,
     currentScore: 0,
+    multiplier: 0.8928571,
     questions: [
       {
         id: 12,
@@ -124,24 +136,28 @@ export const data = [
         questionText: `In the past year, have you had any bouts of diarrhea?`,
         value: null,
         pointsKey: [1, 0],
+        dependentAnswer: 2,
       },
       {
         id: 17,
         questionText: `How frequently does this occur?`,
         value: null,
         pointsKey: [0, 1, 2, 3],
+        dependent: 16,
       },
-       {
+      {
         id: 18,
         questionText: `How severe are these bouts of diarrhea?`,
         value: null,
         pointsKey: [1, 2, 3],
+        dependent: 16,
       },
       {
         id: 19,
         questionText: `Are your bouts of diarrhea getting:`,
         value: null,
         pointsKey: [3, 2, 1, 0, 0, 0],
+        dependent: 16,
       },
       {
         id: 20,
@@ -154,18 +170,21 @@ export const data = [
         questionText: `How frequently are you constipated?`,
         value: null,
         pointsKey: [0, 1, 2, 3],
+        dependent: 20,
       },
       {
         id: 22,
         questionText: `How severe are these episodes of constipation?`,
         value: null,
         pointsKey: [1, 2, 3],
+        dependent: 20,
       },
       {
         id: 23,
         questionText: `Is your constipation getting:`,
         value: null,
         pointsKey: [3, 2, 1, 0, 0, 0],
+        dependent: 20,
       },
     ],
   },
@@ -174,6 +193,7 @@ export const data = [
     domain: 'Bladder',
     maxScore: 9,
     currentScore: 0,
+    multiplier: 1.111,
     questions: [
       {
         id: 24,
@@ -200,30 +220,35 @@ export const data = [
     domain: 'Pupillomotor',
     maxScore: 15,
     currentScore: 0,
+    multiplier: 0.333,
     questions: [
       {
         id: 27,
         questionText: `In the past year, without sunglasses or tinted glasses, has bright light bothered your eyes?`,
         value: null,
         pointsKey: [0, 1, 2, 3],
+        dependentAnswer: 1,
       },
       {
         id: 28,
         questionText: `How severe is this sensitivity to bright light?`,
         value: null,
         pointsKey: [1, 2, 3],
+        dependent: 27,
       },
       {
         id: 29,
         questionText: `In the past year, have you had trouble focusing your eyes?`,
         value: null,
         pointsKey: [0, 1, 2, 3],
+        dependentAnswer: 1,
       },
       {
         id: 30,
         questionText: `How severe is this focusing problem?`,
         value: null,
         pointsKey: [1, 2, 3],
+        dependent: 29,
       },
       {
         id: 31,

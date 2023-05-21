@@ -1,11 +1,27 @@
+.App { 
+  padding: 10px;
+}
+
 .box {
   border: 1px solid rgba(153,152,152,0.405);
-  width: 50vw;
   border-radius: 4px;
   padding: 50px;
   margin-top: 10px;
   margin-bottom: 30px;
 }
+
+@media only screen and (min-width: 992px) {
+  .box {
+    width: 1000px;
+  }
+} 
+
+@media only screen and (max-width: 600px) {
+  .box {
+    padding: 15px;
+  }
+}
+
 .button {
   display: flex;
   justify-content: flex-end;
