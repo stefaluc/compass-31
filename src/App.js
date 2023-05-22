@@ -177,7 +177,7 @@ function App() {
                         </Tooltip>
                       )
                     }
-                    {(question.type === 'checkmark') &&
+                    {(question.type === 'checkmark' && !isDisabledDependent) &&
                       (
                         <Tooltip title={`Enter '1' if none are checked, '2' if one is checked, and '3' if both are checked.`}>
                           <IconButton sx={{ position: 'relative', top: '8px' }}>
