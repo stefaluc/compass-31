@@ -1,3 +1,4 @@
+export const MAX_SCORE = 74;
 export const data = [
   {
     id: 0,
@@ -54,7 +55,7 @@ export const data = [
         id: 6,
         questionText: `What parts of your body are affected by these color changes? (Check all that apply)`,
         value: null,
-        pointsKey: [0, 1, 2],
+        pointsKey: [1, 1],
         type: 'checkmark',
         dependent: 5,
       },

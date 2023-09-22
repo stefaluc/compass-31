@@ -21,7 +21,7 @@ import Paper from '@mui/material/Paper';
 import React from 'react';
 import './App.css';
 import { Button, Divider, Typography } from '@mui/material';
-import { data } from './data';
+import {data, MAX_SCORE} from './data';
 
 const calcIsOutOfRange = (question) => (
   question.value != null &&
@@ -235,8 +235,6 @@ function App() {
                     <TableRow>
                       <TableCell align="left"><h4>Domain</h4></TableCell>
                       <TableCell align="left"><h4>Sum&nbsp;Score</h4></TableCell>
-                      <TableCell align="left"><h4>Multiplier</h4></TableCell>
-                      <TableCell align="left"><h4>Sum Score w/ Multiplier</h4></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -249,8 +247,6 @@ function App() {
                           {row.domain}
                         </TableCell>
                         <TableCell align="left">{row.currentScore}</TableCell>
-                        <TableCell align="left">{row.multiplier}</TableCell>
-                        <TableCell align="left">{row.currentScore * row.multiplier}</TableCell>
                       </TableRow>
                     ))}
                       
@@ -258,8 +254,7 @@ function App() {
                 </Table>
               </TableContainer>
               <br />
-              <div><h4>Total Score (Simplified): {totalScore}</h4></div>
-              <div><h4>Total Score (COMPASS-31): {totalScoreComplex}</h4></div>
+              <div style={{display: 'flex', justifyContent: 'right'}}><h2>Total Score: {totalScore} / {MAX_SCORE}</h2></div>
             </DialogContentText>
           </DialogContent>
           <DialogActions>
