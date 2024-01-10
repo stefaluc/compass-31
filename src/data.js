@@ -1,4 +1,4 @@
-export const MAX_SCORE = 74;
+export const MAX_SCORE = 75;
 export const data = [
   {
     id: 0,
@@ -40,7 +40,7 @@ export const data = [
   {
     id: 1,
     domain: 'Vasomotor',
-    maxScore: 5,
+    maxScore: 6,
     currentScore: 0,
     multiplier: 0.8333,
     questions: [
@@ -55,7 +55,7 @@ export const data = [
         id: 6,
         questionText: `What parts of your body are affected by these color changes? (Check all that apply)`,
         value: null,
-        pointsKey: [1, 1],
+        pointsKey: [1, 1, 2],
         type: 'checkmark',
         dependent: 5,
       },
