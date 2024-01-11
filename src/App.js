@@ -171,7 +171,7 @@ function App() {
                     {isDisabledDependent &&
                       (
                         <Tooltip title={`This question is dependent on question: ${question.dependent}`}>
-                          <IconButton sx={{ position: 'relative', top: '8px' }}>
+                          <IconButton sx={{ position: 'relative', top: '8px' }} tabIndex={-1}>
                             <InfoIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -180,7 +180,7 @@ function App() {
                     {(question.type === 'checkmark' && !isDisabledDependent) &&
                       (
                         <Tooltip title={`Enter '1' if none are checked, '2' if one is checked, and '3' if both are checked.`}>
-                          <IconButton sx={{ position: 'relative', top: '8px' }}>
+                          <IconButton sx={{ position: 'relative', top: '8px' }} tabIndex={-1}>
                             <InfoIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
