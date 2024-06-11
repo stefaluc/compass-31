@@ -22,6 +22,7 @@ import React from 'react';
 import './App.css';
 import { Button, Divider, Typography } from '@mui/material';
 import {data, MAX_SCORE} from './data';
+import logo from './logo.png';
 
 const calcIsOutOfRange = (question) => (
   question.value != null &&
@@ -100,12 +101,17 @@ function App() {
         color="secondary"
       />
     <div className="App">
-      <h2><span className='title'>COMPASS-31</span>&nbsp; The Composite Autonomic Symptom Score</h2>
-      <div>
-        <Typography sx={{color: 'rgb(107, 109, 111)'}}>
-          Input the patient's selected answer number for each question to calculate the final scores.
-        </Typography>
-      </div>
+        <div className="title-container">
+          <img src={logo} className='logo' />
+          <div>
+            <h2><span className='title'>COMPASS-31</span>&nbsp; The Composite Autonomic Symptom Score</h2>
+            <div>
+              <Typography sx={{ color: 'rgb(107, 109, 111)' }}>
+                Input the patient's selected answer number for each question to calculate the final scores.
+              </Typography>
+            </div>
+          </div>
+        </div>
       {formData.map((item, i) => {
         const numQuestionsDoneInSection = countQuestionsDone(item.questions);
         const areAllQuestionsDone = numQuestionsDoneInSection === item.questions.length;

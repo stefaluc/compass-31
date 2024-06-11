@@ -2,12 +2,22 @@
   padding: 10px;
 }
 
+.title-container {
+  display: flex;
+}
+
+.logo {
+  width: 75px;
+  height: 75px;
+}
+
 .box {
   border: 1px solid rgba(153,152,152,0.405);
   border-radius: 4px;
   padding: 50px;
   margin-top: 10px;
   margin-bottom: 30px;
+  background-color: #FFF;
 }
 
 @media only screen and (min-width: 992px) {
@@ -28,7 +38,7 @@
   width: 100%;
 }
 .title {
-  background: linear-gradient(to left, #4e0eff, #240878);
+  background: linear-gradient(to left, #f8ce22, #f7c213, #e0b011);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

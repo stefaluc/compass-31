@@ -174,7 +174,7 @@ export const theme = createTheme({
         "700": "#0059B2",
         "800": "#004C99",
         "900": "#003A75",
-        "main": "#007FFF",
+        "main": "#f7c213",
         "light": "#66B2FF",
         "dark": "#0059B2",
         "contrastText": "#fff"
@@ -269,9 +269,9 @@ export const theme = createTheme({
         "contrastText": "rgba(0, 0, 0, 0.87)"
       },
       "secondary": {
-        "main": "#230870",
-        "light": "#ba68c8",
-        "dark": "#7b1fa2",
+        "main": "#f7c213",
+        "light": "#f8ce22",
+        "dark": "#e0b011",
         "contrastText": "#fff"
       },
       "tertiary": {
