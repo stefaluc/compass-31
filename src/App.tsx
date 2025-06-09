@@ -23,6 +23,8 @@ import './App.css';
 import { Button, Divider, Typography } from '@mui/material';
 import {data, MAX_SCORE} from './data';
 import logo from './logo.png';
+import { Button as ShadButton } from "@/components/ui/button"
+
 
 const calcIsOutOfRange = (question) => (
   question.value != null &&
