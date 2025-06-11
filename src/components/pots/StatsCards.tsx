@@ -8,23 +8,23 @@ interface StatsCardsProps {
 
 export const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <Card>
-        <CardContent className="p-6 text-center">
-          <div className="text-3xl font-bold text-green-600">{stats.lowest}</div>
-          <div className="text-sm text-muted-foreground font-medium">Lowest</div>
+        <CardContent className="p-4 sm:p-6 text-center">
+          <div className="text-2xl sm:text-3xl font-bold text-foreground">{stats.lowest}</div>
+          <div className="text-sm text-muted-foreground font-medium">Lowest HR</div>
         </CardContent>
       </Card>
       <Card>
-        <CardContent className="p-6 text-center">
-          <div className="text-3xl font-bold text-red-600">{stats.highest}</div>
-          <div className="text-sm text-muted-foreground font-medium">Highest</div>
+        <CardContent className="p-4 sm:p-6 text-center">
+          <div className="text-2xl sm:text-3xl font-bold text-foreground">{stats.highest}</div>
+          <div className="text-sm text-muted-foreground font-medium">Highest HR</div>
         </CardContent>
       </Card>
       <Card>
-        <CardContent className="p-6 text-center">
-          <div className="text-3xl font-bold text-primary">{stats.delta}</div>
-          <div className="text-sm text-muted-foreground font-medium">Delta</div>
+        <CardContent className="p-4 sm:p-6 text-center">
+          <div className="text-2xl sm:text-3xl font-bold text-primary">{stats.delta}</div>
+          <div className="text-sm text-muted-foreground font-medium">HR Increase (Δ)</div>
         </CardContent>
       </Card>
     </div>
