@@ -7,7 +7,7 @@ import { ChartDataPoint, TrendDataPoint } from '@/types/pots';
 
 interface HeartRateChartProps {
   chartData: ChartDataPoint[];
-  trendData: TrendDataPoint[]; // kept for compatibility but not used
+  trendData: TrendDataPoint[];
   showTrendLine: boolean;
   onToggleTrendLine: () => void;
   onExportChart: () => void;
@@ -46,10 +46,16 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export const HeartRateChart: React.FC<HeartRateChartProps> = ({
   chartData,
+  trendData,
   showTrendLine,
   onToggleTrendLine,
   onExportChart
 }) => {
+  // Calculate Y-axis domain based only on heartRate values to prevent axis scaling issues
+  const heartRates = chartData.map(d => d.heartRate);
+  const minHR = Math.min(...heartRates);
+  const maxHR = Math.max(...heartRates);
+  const yAxisDomain = [minHR - 10, maxHR + 10];
   return (
     <Card>
       <CardHeader>
@@ -100,7 +106,7 @@ export const HeartRateChart: React.FC<HeartRateChartProps> = ({
             />
             <YAxis 
               label={{ value: 'Heart Rate (bpm)', angle: -90, position: 'insideLeft' }}
-              domain={['dataMin - 10', 'dataMax + 10']}
+              domain={yAxisDomain}
               stroke="hsl(var(--muted-foreground))"
               tickCount={8}
             />
@@ -115,8 +121,9 @@ export const HeartRateChart: React.FC<HeartRateChartProps> = ({
               dot={{ fill: '#FACC14', strokeWidth: 1, r: 4 }}
               activeDot={{ r: 6, fill: '#FACC14', stroke: '#ffffff', strokeWidth: 2 }}
             />
-            {showTrendLine && (
+            {showTrendLine && trendData.length > 0 && (
               <Line 
+                data={trendData}
                 type="monotone" 
                 dataKey="trendValue" 
                 stroke="hsl(var(--muted-foreground))" 

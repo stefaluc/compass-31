@@ -18,7 +18,6 @@ export interface ChartDataPoint {
   heartRate: number;
   label: string;
   isPreTest: boolean;
-  trendValue?: number;
 }
 
 export interface TrendDataPoint {

@@ -31,7 +31,10 @@ const StandingPhase: React.FC<{
   onCompleteTest: () => void;
   isInitialHRRecording: boolean;
   onRecordInitialHR: (heartRate: number, symptoms: string[]) => void;
-}> = ({ timer, isRunning, measurements, nextMeasurementIn, onAddMeasurement, onToggleTimer, onEmergencyStop, onCompleteTest, isInitialHRRecording, onRecordInitialHR }) => {
+  onUpdateMeasurement: (index: number, heartRate: number, symptoms: string[]) => void;
+  onDeleteMeasurement: (index: number) => void;
+  onAddMissedMeasurement: (timeMinutes: number, timeSeconds: number, heartRate: number, symptoms: string[]) => void;
+}> = ({ timer, isRunning, measurements, nextMeasurementIn, onAddMeasurement, onToggleTimer, onEmergencyStop, onCompleteTest, isInitialHRRecording, onRecordInitialHR, onUpdateMeasurement, onDeleteMeasurement, onAddMissedMeasurement }) => {
   const [heartRate, setHeartRate] = useState('');
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [lastToastTime, setLastToastTime] = useState(0);
@@ -217,7 +220,13 @@ const StandingPhase: React.FC<{
           {/* Recent Measurements */}
           <div>
             <p className="text-lg font-semibold mb-4">Recent Measurements</p>
-            <RecentMeasurements measurements={measurements} />
+            <RecentMeasurements 
+              measurements={measurements} 
+              onUpdateMeasurement={onUpdateMeasurement}
+              onDeleteMeasurement={onDeleteMeasurement}
+              onAddMissedMeasurement={onAddMissedMeasurement}
+              currentTimer={timer}
+            />
           </div>
 
           {/* Complete Test Buttons */}
@@ -386,6 +395,41 @@ const ClinicalPotsAssessment: React.FC = () => {
     setMeasurements(prev => [...prev, measurement]);
   };
 
+  const handleUpdateMeasurement = (index: number, heartRate: number, symptoms: string[]) => {
+    setMeasurements(prev => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        pulseRate: heartRate,
+        symptoms: symptoms.join(', ')
+      };
+      return updated;
+    });
+  };
+
+  const handleDeleteMeasurement = (index: number) => {
+    setMeasurements(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddMissedMeasurement = (timeMinutes: number, timeSeconds: number, heartRate: number, symptoms: string[]) => {
+    const totalSeconds = timeMinutes * 60 + timeSeconds;
+    const measurement: Measurement = {
+      timeMinutes,
+      timeSeconds,
+      totalSeconds,
+      pulseRate: heartRate,
+      symptoms: symptoms.join(', '),
+      label: `${timeMinutes}:${timeSeconds.toString().padStart(2, '0')}`,
+      chartTime: totalSeconds / 60
+    };
+
+    setMeasurements(prev => {
+      const updated = [...prev, measurement];
+      // Sort by total seconds to maintain chronological order
+      return updated.sort((a, b) => a.totalSeconds - b.totalSeconds);
+    });
+  };
+
   const emergencyStop = () => {
     setIsRunning(false);
     setPhase('complete');
@@ -454,26 +498,27 @@ const ClinicalPotsAssessment: React.FC = () => {
         });
       }
     });
-    
-    const sortedData = chartData.sort((a, b) => a.time - b.time);
-    
-    // Add trend values to the same data points if trend line is enabled
-    if (showTrendLine && sortedData.length >= 2) {
-      const n = sortedData.length;
-      const sumX = sortedData.reduce((sum, d) => sum + d.time, 0);
-      const sumY = sortedData.reduce((sum, d) => sum + d.heartRate, 0);
-      const sumXY = sortedData.reduce((sum, d) => sum + d.time * d.heartRate, 0);
-      const sumXX = sortedData.reduce((sum, d) => sum + d.time * d.time, 0);
+    return chartData.sort((a, b) => a.time - b.time);
+  };
 
-      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-      const intercept = (sumY - slope * sumX) / n;
+  const getTrendLineData = (): TrendDataPoint[] => {
+    if (!showTrendLine) return [];
+    const chartData = prepareChartData();
+    if (chartData.length < 2) return [];
 
-      sortedData.forEach(d => {
-        d.trendValue = slope * d.time + intercept;
-      });
-    }
-    
-    return sortedData;
+    const n = chartData.length;
+    const sumX = chartData.reduce((sum, d) => sum + d.time, 0);
+    const sumY = chartData.reduce((sum, d) => sum + d.heartRate, 0);
+    const sumXY = chartData.reduce((sum, d) => sum + d.time * d.heartRate, 0);
+    const sumXX = chartData.reduce((sum, d) => sum + d.time * d.time, 0);
+
+    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+
+    return chartData.map(d => ({
+      time: d.time,
+      trendValue: slope * d.time + intercept
+    }));
   };
 
 
@@ -552,6 +597,7 @@ Generated: ${new Date().toLocaleString()}`;
   };
 
   const chartData = prepareChartData();
+  const trendData = getTrendLineData();
   const stats = getStats();
   const nextMeasurementIn = phase === 'standing' && !isInitialHRRecording ? 30 - (timer % 30) : undefined;
 
@@ -741,6 +787,9 @@ Generated: ${new Date().toLocaleString()}`;
               onCompleteTest={completeTest}
               isInitialHRRecording={isInitialHRRecording}
               onRecordInitialHR={handleInitialHRRecorded}
+              onUpdateMeasurement={handleUpdateMeasurement}
+              onDeleteMeasurement={handleDeleteMeasurement}
+              onAddMissedMeasurement={handleAddMissedMeasurement}
             />
           </div>
         )}
@@ -797,7 +846,7 @@ Generated: ${new Date().toLocaleString()}`;
 
               <HeartRateChart
                 chartData={chartData}
-                trendData={[]}
+                trendData={trendData}
                 showTrendLine={showTrendLine}
                 onToggleTrendLine={() => setShowTrendLine(!showTrendLine)}
                 onExportChart={exportChart}
