@@ -26,13 +26,13 @@ import logo from '@/assets/logo.png';
 const calcIsOutOfRange = (question: any) => (
   question.value != null &&
   (question.value <= 0 ||
-  question.value > question.pointsKey.length)
+    question.value > question.pointsKey.length)
 );
 
 const calcIsInRange = (question: any) => (
   question.value != null &&
   (question.value > 0 &&
-  question.value <= question.pointsKey.length)
+    question.value <= question.pointsKey.length)
 );
 
 const countQuestionsDone = (questionList: any[]) => {
@@ -81,7 +81,7 @@ function CompassTool() {
     intervalId = setInterval(animateCount, 20);
 
     return () => clearInterval(intervalId);
-  }, [orthoCount, orthoScore]); 
+  }, [orthoCount, orthoScore]);
 
   const handleOpen = () => {
     setOpen(true);
@@ -93,13 +93,13 @@ function CompassTool() {
 
   return (
     <>
-      <LinearProgress 
-        sx={{width: '100vw', position: 'fixed', left: 0, top: 64, zIndex: '40'}}
+      <LinearProgress
+        sx={{ width: '100vw', position: 'fixed', left: 0, top: 64, zIndex: '40' }}
         variant="determinate"
         value={(numQuestionsDone / numQuestions) * 100}
         color="secondary"
       />
-    <div className="App">
+      <div className="App">
         <div className="title-container pt-2">
           <div className="">
             <h2 className="text-xl font-bold mb-2">
@@ -110,114 +110,115 @@ function CompassTool() {
             </p>
           </div>
         </div>
-      {formData.map((item, i) => {
-        const numQuestionsDoneInSection = countQuestionsDone(item.questions);
-        const areAllQuestionsDone = numQuestionsDoneInSection === item.questions.length;
+        {formData.map((item, i) => {
+          const numQuestionsDoneInSection = countQuestionsDone(item.questions);
+          const areAllQuestionsDone = numQuestionsDoneInSection === item.questions.length;
 
-        return (
-        <>
-          <div key={item.id} className="box">
-            <h3>{item.domain}</h3>
-            <Divider />
-            <ol>
-              {item.questions.map((question, j) => {
-                const key = `d${item.id.toString()}q${question.id.toString()}`;
-                const isOutOfRange = calcIsOutOfRange(question);
-                let isDisabledDependent = false;
-                if (question.dependent) {
-                  const dependentQuestion = item.questions.find(q => q.id === question.dependent);
-                  isDisabledDependent = dependentQuestion.value === dependentQuestion.dependentAnswer;
-                }
-
-                return (
-                  <li key={key} value={question.id}>
-                    <Typography style={{fontSize: 'clamp(.8rem, 0.6rem + 1vw, 1rem)'}}>{question.questionText}</Typography>
-                    <TextField
-                      error={isOutOfRange}
-                      type='number'
-                      sx={{ marginTop: '5px' }}
-                      size="small"
-                      color="secondary"
-                      disabled={isDisabledDependent}
-                      label={isDisabledDependent ? 'N/A' : ''}
-                      onChange={(e) => {
-                        const newQuestions = [
-                          ...item.questions.slice(0, j),
-                          {
-                            ...question,
-                            value: parseInt(e.target.value),
-                          },
-                          ...item.questions.slice(j + 1),
-                        ];
-
-                        let newScore = 0;
-                        item.questions.forEach(q => {
-                          if (q.id === question.id) {
-                            newScore += q.pointsKey[parseInt(e.target.value) - 1] ?? 0
-                          } else {
-                            newScore += q.pointsKey[q.value - 1] ?? 0
-                          }
-                        });
-                        const newFormData = [
-                          ...formData.slice(0, i),
-                          {
-                            ...item,
-                            currentScore: newScore,
-                            questions: newQuestions,
-                          },
-                          ...formData.slice(i + 1),
-                        ];
-
-                        setFormData(newFormData);
-                        setOrthoScore(parseInt(e.target.value));
-                      }}
-                    />
-                    {isDisabledDependent &&
-                      (
-                        <Tooltip title={`This question is dependent on question: ${question.dependent}`}>
-                          <IconButton sx={{ position: 'relative', top: '8px' }} tabIndex={-1}>
-                            <InfoIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )
+          return (
+            <>
+              <div key={item.id} className="box">
+                <h3>{item.domain}</h3>
+                <Divider />
+                <ol>
+                  {item.questions.map((question, j) => {
+                    const key = `d${item.id.toString()}q${question.id.toString()}`;
+                    const isOutOfRange = calcIsOutOfRange(question);
+                    let isDisabledDependent = false;
+                    if (question.dependent) {
+                      const dependentQuestion = item.questions.find(q => q.id === question.dependent);
+                      isDisabledDependent = dependentQuestion.value === dependentQuestion.dependentAnswer;
                     }
-                    {(question.type === 'checkmark' && !isDisabledDependent) &&
-                      (
-                        <Tooltip title={`Enter '1' if none are checked, '2' if one is checked, and '3' if both are checked.`}>
-                          <IconButton sx={{ position: 'relative', top: '8px' }} tabIndex={-1}>
-                            <InfoIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
 
-                      )
-                    }
-                    {isOutOfRange &&
-                      (
-                        <Typography color="error">This number is not a valid patient answer.</Typography>
-                      )
-                    }
-                  </li>
-                )
-              })}
-            </ol>
-            <div className={`score ${areAllQuestionsDone ? 'emphasized' : ''}`}>
-              {item.currentScore}&nbsp;/&nbsp;{item.maxScore}
-            </div>
-          </div>
-        </>
-      )})}
-      <div className="button">
-        <Button
-          sx={{ width: '200px', height: '50px' }}
-          variant='contained'
-          color="secondary"
-          //disabled={numQuestionsDone !== numQuestions}
-          onClick={handleOpen}
-        >
-          Calculate Score
-        </Button>
+                    return (
+                      <li key={key} value={question.id}>
+                        <Typography style={{ fontSize: 'clamp(.8rem, 0.6rem + 1vw, 1rem)' }}>{question.questionText}</Typography>
+                        <TextField
+                          error={isOutOfRange}
+                          type='number'
+                          sx={{ marginTop: '5px' }}
+                          size="small"
+                          color="secondary"
+                          disabled={isDisabledDependent}
+                          label={isDisabledDependent ? 'N/A' : ''}
+                          onChange={(e) => {
+                            const newQuestions = [
+                              ...item.questions.slice(0, j),
+                              {
+                                ...question,
+                                value: parseInt(e.target.value),
+                              },
+                              ...item.questions.slice(j + 1),
+                            ];
+
+                            let newScore = 0;
+                            item.questions.forEach(q => {
+                              if (q.id === question.id) {
+                                newScore += q.pointsKey[parseInt(e.target.value) - 1] ?? 0
+                              } else {
+                                newScore += q.pointsKey[q.value - 1] ?? 0
+                              }
+                            });
+                            const newFormData = [
+                              ...formData.slice(0, i),
+                              {
+                                ...item,
+                                currentScore: newScore,
+                                questions: newQuestions,
+                              },
+                              ...formData.slice(i + 1),
+                            ];
+
+                            setFormData(newFormData);
+                            setOrthoScore(parseInt(e.target.value));
+                          }}
+                        />
+                        {isDisabledDependent &&
+                          (
+                            <Tooltip title={`This question is dependent on question: ${question.dependent}`}>
+                              <IconButton sx={{ position: 'relative', top: '8px' }} tabIndex={-1}>
+                                <InfoIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )
+                        }
+                        {(question.type === 'checkmark' && !isDisabledDependent) &&
+                          (
+                            <Tooltip title={`Enter '1' if none are checked, '2' if one is checked, and '3' if both are checked.`}>
+                              <IconButton sx={{ position: 'relative', top: '8px' }} tabIndex={-1}>
+                                <InfoIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+
+                          )
+                        }
+                        {isOutOfRange &&
+                          (
+                            <Typography color="error">This number is not a valid patient answer.</Typography>
+                          )
+                        }
+                      </li>
+                    )
+                  })}
+                </ol>
+                <div className={`score ${areAllQuestionsDone ? 'emphasized' : ''}`}>
+                  {item.currentScore}&nbsp;/&nbsp;{item.maxScore}
+                </div>
+              </div>
+            </>
+          )
+        })}
+        <div className="button">
+          <Button
+            sx={{ width: '200px', height: '50px' }}
+            variant='contained'
+            color="secondary"
+            //disabled={numQuestionsDone !== numQuestions}
+            onClick={handleOpen}
+          >
+            Calculate Score
+          </Button>
+        </div>
       </div>
-    </div>
       {open && (
         <Dialog
           fullScreen={fullScreen}
@@ -232,7 +233,7 @@ function CompassTool() {
           </DialogTitle>
           <DialogContent>
             <DialogContentText>
-              
+
               <TableContainer component={Paper}>
                 <Table sx={{ minWidth: 650 }} aria-label="simple table">
                   <TableHead>
@@ -245,7 +246,7 @@ function CompassTool() {
                     {formData.map((row, j) => (
                       <TableRow
                         key={row.domain}
-                        sx={{ '&:last-child td, &:last-child th': { border: 0 }}}
+                        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                       >
                         <TableCell component="th" scope="row">
                           {row.domain}
@@ -253,16 +254,16 @@ function CompassTool() {
                         <TableCell align="left">{row.currentScore}</TableCell>
                       </TableRow>
                     ))}
-                      
+
                   </TableBody>
                 </Table>
               </TableContainer>
               <br />
-              <div style={{display: 'flex', justifyContent: 'right'}}><h2>Total Score: {totalScore} / {MAX_SCORE}</h2></div>
+              <div style={{ display: 'flex', justifyContent: 'right' }}><h2>Total Score: {totalScore} / {MAX_SCORE}</h2></div>
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => {setOpen(false)}} color="tertiary">
+            <Button onClick={() => { setOpen(false) }} color="tertiary">
               Edit Previous
             </Button>
             <Button onClick={handleClose} autoFocus color="secondary" variant="outlined">

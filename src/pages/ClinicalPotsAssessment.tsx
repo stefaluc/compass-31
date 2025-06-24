@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Copy, RotateCcw, Activity, CheckCircle, AlertTriangle, Clock, Play, Pause, Square, Download } from 'lucide-react';
+import { Copy, RotateCcw, Activity, CheckCircle, AlertTriangle, Clock, Play, Pause, Square, Download, ChevronRight } from 'lucide-react';
 import { BloodPressure, Measurement, TestPhase, TestStats, ChartDataPoint, TrendDataPoint } from '@/types/pots';
 import { toast } from 'sonner';
 
@@ -17,6 +17,7 @@ import { RecentMeasurements } from '@/components/pots/RecentMeasurements';
 import { StatsCards } from '@/components/pots/StatsCards';
 import { HeartRateChart } from '@/components/pots/HeartRateChart';
 import { CompactSymptomSelector } from '@/components/pots/CompactSymptomSelector';
+import { LinearProgress } from '@mui/material';
 
 // Standing Phase Component
 const StandingPhase: React.FC<{
@@ -38,7 +39,7 @@ const StandingPhase: React.FC<{
     if (timer > 0 && nextMeasurementIn) {
       const isDue = nextMeasurementIn === 30; // Just hit 30 second mark
       const isWarning = nextMeasurementIn <= 5 && nextMeasurementIn > 0; // Countdown warning
-      
+
       if (isDue && timer !== lastToastTime) {
         toast.info('⏰ Time to record heart rate measurement', {
           duration: 4000,
@@ -502,26 +503,35 @@ Generated: ${new Date().toLocaleString()}`;
 
   return (
     <div className="min-h-screen bg-background">
+            <LinearProgress
+        sx={{ width: '100vw', position: 'fixed', left: 0, top: 64, zIndex: '40' }}
+        variant="determinate"
+        value={getPhaseProgress()}
+        color="secondary"
+      />
       {/* Clinical Header */}
-      <div className="bg-card shadow-sm border-b">
+      <div className="bg-card border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between text-center sm:text-left">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+              {/* <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                 <Activity size={24} className="text-primary" />
-              </div>
+              </div> */}
               <div>
-                <p className="text-2xl font-bold">NASA Lean Test</p>
-                <p className="text-muted-foreground">Clinical POTS Assessment</p>
+                <h2 className="text-2xl font-bold mb-0">
+                  <span className='title'>NASA Lean</span> Test
+                </h2>
+                <p className="text-muted-foreground">Monitor the patient's heart rate while supine and standing to assess for Orthostatic Intolerance.</p>
               </div>
+            </div>
+
+            <div className="flex items-center gap-6">
               {patientName && (
                 <Badge variant="outline" className="text-lg px-3 py-1">
                   {patientName}
                 </Badge>
               )}
-            </div>
-
-            <div className="flex items-center gap-6">
+              {/*
               {phase !== 'complete' &&
                 <div className="w-48">
                   <div className="flex justify-between text-xs text-muted-foreground mb-1">
@@ -537,13 +547,13 @@ Generated: ${new Date().toLocaleString()}`;
                   <CheckCircle className="h-4 w-4 mr-1" />
                   Complete
                 </Badge>
-              )}
+              )}*/}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 max-w-3xl mx-auto">
         {/* Setup Phase */}
         {phase === 'setup' && (
           <div className="space-y-6">
@@ -593,7 +603,7 @@ Generated: ${new Date().toLocaleString()}`;
                   <div className="text-6xl sm:text-8xl font-bold mb-4 text-foreground">
                     {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}
                   </div>
-                  <Progress value={Math.min((timer / 600) * 100, 100)} className="h-3 sm:h-4 mb-4" />
+                  <Progress value={Math.min((timer / 600) * 100, 100)} className="h-3 sm:h-4 mb-4 max-w-xl mx-auto" />
                   <div className="text-sm text-muted-foreground">
                     {Math.round(Math.min((timer / 600) * 100, 100))}% Complete
                   </div>
@@ -625,42 +635,38 @@ Generated: ${new Date().toLocaleString()}`;
 
                 {/* Control Buttons */}
                 <div className="space-y-4">
-                  <div className="flex gap-4">
-                    <Button
-                      onClick={() => setIsRunning(!isRunning)}
-                      variant={isRunning ? "secondary" : "default"}
-                      size="lg"
-                      className="flex-1 h-16 text-xl"
-                    >
-                      {isRunning ? <Pause className="h-6 w-6 mr-3" /> : <Play className="h-6 w-6 mr-3" />}
-                      {isRunning ? 'Pause' : 'Resume'}
-                    </Button>
-
-
-                    <Button
-                      onClick={emergencyStop}
-                      variant="destructive"
-                      size="lg"
-                      className="h-16 px-8"
-                    >
-                      <Square className="h-6 w-6 mr-2" />
-                      Stop
-                    </Button>
-                  </div>
-
-                  {/* Start Standing Button */}
-                  {lowestSupinePR && (
-                    <div>
+                  <div className="flex flex-col sm:flex-row gap-4 w-full">
+                    <div className="flex gap-4 w-full">
                       <Button
-                        onClick={startStandingPhase}
+                        onClick={() => setIsRunning(!isRunning)}
+                        variant={isRunning ? "secondary" : "default"}
                         size="lg"
-                        className="w-full h-16 text-xl"
+                        className="flex-1 h-16 text-xl"
                       >
-                        <CheckCircle className="h-6 w-6 mr-3" />
-                        Start Standing Phase
+                        {isRunning ? <Pause className="h-6 w-6 mr-3" /> : <Play className="h-6 w-6 mr-3" />}
+                        {isRunning ? 'Pause' : 'Resume'}
+                      </Button>
+
+                      <Button
+                        onClick={emergencyStop}
+                        variant="destructive"
+                        size="lg"
+                        className="h-16 px-8"
+                      >
+                        <Square className="h-6 w-6 mr-2" />
+                        Stop
                       </Button>
                     </div>
-                  )}
+
+                    <Button
+                      onClick={startStandingPhase}
+                      size="lg"
+                      className="w-full sm:w-auto h-16 text-xl"
+                    >
+                      Continue to Standing Phase
+                      <ChevronRight className="h-6 w-6 md:ml-3" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -671,15 +677,15 @@ Generated: ${new Date().toLocaleString()}`;
         {phase === 'standing' && (
           <div className="py-4">
             <StandingPhase
-            timer={timer}
-            isRunning={isRunning}
-            measurements={measurements}
-            nextMeasurementIn={nextMeasurementIn}
-            onAddMeasurement={handleMeasurementAdded}
-            onToggleTimer={() => setIsRunning(!isRunning)}
-            onEmergencyStop={emergencyStop}
-            onCompleteTest={completeTest}
-          />
+              timer={timer}
+              isRunning={isRunning}
+              measurements={measurements}
+              nextMeasurementIn={nextMeasurementIn}
+              onAddMeasurement={handleMeasurementAdded}
+              onToggleTimer={() => setIsRunning(!isRunning)}
+              onEmergencyStop={emergencyStop}
+              onCompleteTest={completeTest}
+            />
           </div>
         )}
 
@@ -752,8 +758,8 @@ Generated: ${new Date().toLocaleString()}`;
                     size="lg"
                     className="h-12 sm:h-14 text-base"
                   >
-                    <RotateCcw size={18} className="mr-2" />
-                    New Test
+                    <RotateCcw size={18} className="sm:mr-2" />
+                    <span className="hidden sm:block">New Test</span>
                   </Button>
                   <div className="flex-1 flex justify-end gap-3">
                     <Button
@@ -761,16 +767,16 @@ Generated: ${new Date().toLocaleString()}`;
                       size="lg"
                       className="h-12 sm:h-14 text-base flex-1 bg-secondary"
                     >
-                      <Download size={18} className="mr-2" />
-                      Export Chart
+                      <Download size={18} className="sm:mr-2" />
+                      <span className="hidden sm:block">Export</span> Chart
                     </Button>
                     <Button
                       onClick={copyToClipboard}
                       size="lg"
                       className="h-12 sm:h-14 text-base flex-1"
                     >
-                      <Copy size={18} className="mr-2" />
-                      Copy Summary
+                      <Copy size={18} className="sm:mr-2" />
+                      <span className="hidden sm:block">Copy</span> Summary
                     </Button>
                   </div>
                 </div>

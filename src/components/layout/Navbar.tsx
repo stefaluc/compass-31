@@ -35,8 +35,8 @@ function Navbar() {
               size="sm"
             >
               <Link to="/pots">
-                <span className="hidden sm:inline">POTS Assessment</span>
-                <span className="sm:hidden">POTS</span>
+                <span className="hidden sm:inline">NASA Lean Test</span>
+                <span className="sm:hidden">NASA</span>
               </Link>
             </Button>
           </div>

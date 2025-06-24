@@ -15,7 +15,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <Router>
-        <div className="min-h-screen bg-background max-w-3xl mx-auto">
+        <div className="min-h-screen bg-background max-w-5xl mx-auto">
           <Navbar />
           <main className="pt-0">
             <Routes>
