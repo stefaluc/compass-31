@@ -29,30 +29,36 @@ const StandingPhase: React.FC<{
   onToggleTimer: () => void;
   onEmergencyStop: () => void;
   onCompleteTest: () => void;
-}> = ({ timer, isRunning, measurements, nextMeasurementIn, onAddMeasurement, onToggleTimer, onEmergencyStop, onCompleteTest }) => {
+  isInitialHRRecording: boolean;
+  onRecordInitialHR: (heartRate: number, symptoms: string[]) => void;
+}> = ({ timer, isRunning, measurements, nextMeasurementIn, onAddMeasurement, onToggleTimer, onEmergencyStop, onCompleteTest, isInitialHRRecording, onRecordInitialHR }) => {
   const [heartRate, setHeartRate] = useState('');
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [lastToastTime, setLastToastTime] = useState(0);
 
   // Timer reminders
   React.useEffect(() => {
-    if (timer > 0 && nextMeasurementIn) {
+    if (timer > 0 && nextMeasurementIn && !isInitialHRRecording) {
       const isDue = nextMeasurementIn === 30; // Just hit 30 second mark
       const isWarning = nextMeasurementIn <= 5 && nextMeasurementIn > 0; // Countdown warning
 
       if (isDue && timer !== lastToastTime) {
         toast.info('⏰ Time to record heart rate measurement', {
-          duration: 4000,
-        });
-        setLastToastTime(timer);
-      } else if (isWarning && Math.floor(timer / 5) !== Math.floor(lastToastTime / 5)) {
-        toast.warning(`Measurement due in ${nextMeasurementIn} seconds`, {
           duration: 2000,
         });
         setLastToastTime(timer);
+      } else if (isWarning) {
+        // Show individual countdown toasts for 5, 4, 3, 2, 1
+        const currentSecond = nextMeasurementIn;
+        const lastSecond = Math.ceil((timer - 1) % 30);
+        if (currentSecond !== lastSecond && currentSecond <= 5) {
+          toast.warning(`Record measurement in ${currentSecond} second${currentSecond === 1 ? '' : 's'}`, {
+            duration: 800,
+          });
+        }
       }
     }
-  }, [timer, nextMeasurementIn, lastToastTime]);
+  }, [timer, nextMeasurementIn, lastToastTime, isInitialHRRecording]);
 
   const handleRecord = () => {
     const hr = parseInt(heartRate);
@@ -64,8 +70,15 @@ const StandingPhase: React.FC<{
       toast.error('Heart rate must be between 30-200 bpm');
       return;
     }
-    onAddMeasurement(hr, selectedSymptoms);
-    toast.success(`Measurement recorded: ${hr} bpm`);
+    
+    if (isInitialHRRecording) {
+      onRecordInitialHR(hr, selectedSymptoms);
+      toast.success(`Initial standing HR recorded: ${hr} bpm - Timer started!`);
+    } else {
+      onAddMeasurement(hr, selectedSymptoms);
+      toast.success(`Measurement recorded: ${hr} bpm`);
+    }
+    
     setHeartRate('');
     setSelectedSymptoms([]);
   };
@@ -87,31 +100,45 @@ const StandingPhase: React.FC<{
                 <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8" />
               </div>
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+                <p className="text-xl sm:text-2xl font-bold text-foreground">
                   Standing Test Phase
-                </h2>
-                <p className="text-sm sm:text-base text-muted-foreground mt-1">
-                  Record heart rate every 30 seconds
+                </p>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  {isInitialHRRecording ? 'Record initial standing heart rate to start timer' : 'Record heart rate every 30 seconds'}
                 </p>
               </div>
             </div>
             <div className="ml-auto">
-              <Badge variant={isRunning ? "default" : "secondary"} className="text-sm">
-                {isRunning ? 'Running' : 'Paused'}
+              <Badge variant={isInitialHRRecording ? "outline" : (isRunning ? "default" : "secondary")} className="text-sm">
+                {isInitialHRRecording ? 'Ready to Start' : (isRunning ? 'Running' : 'Paused')}
               </Badge>
             </div>
           </div>
 
           {/* Prominent Timer Display */}
-          <div className="text-center mb-8">
-            <div className="text-6xl sm:text-8xl font-bold mb-4 text-foreground">
-              {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}
+          {!isInitialHRRecording && (
+            <div className="text-center mb-8">
+              <div className="text-6xl sm:text-8xl font-bold mb-4 text-foreground">
+                {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}
+              </div>
+              <Progress value={Math.min((timer / 600) * 100, 100)} className="h-3 sm:h-4 mb-4" />
+              <div className="text-sm text-muted-foreground">
+                Next measurement in: {nextMeasurementIn}s | Recorded: {measurements.length}
+              </div>
             </div>
-            <Progress value={Math.min((timer / 600) * 100, 100)} className="h-3 sm:h-4 mb-4" />
-            <div className="text-sm text-muted-foreground">
-              Next measurement in: {nextMeasurementIn}s | Recorded: {measurements.length}
+          )}
+
+          {/* Initial HR Recording Display */}
+          {isInitialHRRecording && (
+            <div className="text-center mb-8">
+              <div className="text-lg sm:text-xl font-bold text-foreground">
+                Record Initial Standing HR
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Have the patient stand up, then immediately record their heart rate to start the 10-minute timer.
+              </p>
             </div>
-          </div>
+          )}
 
           {/* Main Input Area */}
           <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -158,19 +185,22 @@ const StandingPhase: React.FC<{
               onClick={handleRecord}
               disabled={!heartRate}
               size="lg"
-              className="flex-1 h-12 sm:h-16 text-base sm:text-lg"
+              className="sm:flex-1 h-12 sm:h-16 text-base sm:text-lg"
             >
-              Record Measurement
+              {isInitialHRRecording ? <Play className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> : <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />}
+              {isInitialHRRecording ? 'Record Initial HR & Start Timer' : 'Record Measurement'}
             </Button>
-            <Button
-              onClick={onToggleTimer}
-              variant={isRunning ? "secondary" : "outline"}
-              size="lg"
-              className="h-12 sm:h-16 px-4 sm:px-6"
-            >
-              {isRunning ? <Pause className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> : <Play className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />}
-              {isRunning ? 'Pause' : 'Resume'}
-            </Button>
+            {!isInitialHRRecording && (
+              <Button
+                onClick={onToggleTimer}
+                variant={isRunning ? "secondary" : "outline"}
+                size="lg"
+                className="h-12 sm:h-16 px-4 sm:px-6"
+              >
+                {isRunning ? <Pause className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> : <Play className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />}
+                {isRunning ? 'Pause' : 'Resume'}
+              </Button>
+            )}
             <Button
               onClick={onEmergencyStop}
               variant="destructive"
@@ -229,6 +259,7 @@ const ClinicalPotsAssessment: React.FC = () => {
   const [phase, setPhase] = useState<TestPhase>('setup');
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [isInitialHRRecording, setIsInitialHRRecording] = useState(false);
 
   const [initialBP, setInitialBP] = useState<BloodPressure>({ systolic: '', diastolic: '' });
   const [initialPR, setInitialPR] = useState('');
@@ -288,13 +319,13 @@ const ClinicalPotsAssessment: React.FC = () => {
       toast.warning('Standing phase started without lowest supine HR recorded', {
         description: 'You can still complete the test, but consider recording it if possible'
       });
-    } else {
-      toast.success('Standing phase started - Record heart rate every 30 seconds');
     }
 
     setPhase('standing');
     setTimer(0);
-    setIsRunning(true);
+    setIsRunning(false);
+    setIsInitialHRRecording(true);
+    toast.info('Patient should now stand up. Record their initial standing heart rate to start the timer.');
   };
 
   const manualAdvanceToStanding = () => {
@@ -320,6 +351,23 @@ const ClinicalPotsAssessment: React.FC = () => {
 
     setIsRunning(false);
     startStandingPhase();
+  };
+
+  const handleInitialHRRecorded = (heartRate: number, symptoms: string[]) => {
+    // Add the initial 0-second measurement
+    const measurement: Measurement = {
+      timeMinutes: 0,
+      timeSeconds: 0,
+      totalSeconds: 0,
+      pulseRate: heartRate,
+      symptoms: symptoms.join(', '),
+      label: '0:00',
+      chartTime: 0
+    };
+
+    setMeasurements([measurement]);
+    setIsInitialHRRecording(false);
+    setIsRunning(true);
   };
 
   const handleMeasurementAdded = (heartRate: number, symptoms: string[]) => {
@@ -356,6 +404,7 @@ const ClinicalPotsAssessment: React.FC = () => {
     setIsRunning(false);
     setMeasurements([]);
     setLowestSupinePR('');
+    setIsInitialHRRecording(false);
     toast.info('Test reset - ready for new patient');
   };
 
@@ -499,7 +548,7 @@ Generated: ${new Date().toLocaleString()}`;
   const chartData = prepareChartData();
   const trendData = getTrendLineData();
   const stats = getStats();
-  const nextMeasurementIn = phase === 'standing' ? 30 - (timer % 30) : undefined;
+  const nextMeasurementIn = phase === 'standing' && !isInitialHRRecording ? 30 - (timer % 30) : undefined;
 
   return (
     <div className="min-h-screen bg-background">
@@ -685,6 +734,8 @@ Generated: ${new Date().toLocaleString()}`;
               onToggleTimer={() => setIsRunning(!isRunning)}
               onEmergencyStop={emergencyStop}
               onCompleteTest={completeTest}
+              isInitialHRRecording={isInitialHRRecording}
+              onRecordInitialHR={handleInitialHRRecorded}
             />
           </div>
         )}
@@ -694,7 +745,7 @@ Generated: ${new Date().toLocaleString()}`;
           <>
             <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-24">
               <div className="text-center">
-                <h2 className="text-2xl sm:text-3xl font-bold mb-2">Test Results</h2>
+                <p className="text-2xl sm:text-3xl font-bold">Test Results</p>
                 <p className="text-muted-foreground">Clinical summary and data visualization</p>
               </div>
 
