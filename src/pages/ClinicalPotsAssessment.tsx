@@ -541,14 +541,12 @@ ${measurements.map(m =>
     ).join('\n')}
 
 Summary Statistics:
-- Lowest Standing HR: ${stats.lowest} bpm
 - Highest Standing HR: ${stats.highest} bpm
 - Heart Rate Increase (Δ): ${stats.delta} bpm
 
 Clinical Interpretation:
 ${stats.delta >= 30 ? '⚠️ Positive POTS criteria (ΔHR ≥30 bpm)' : '✓ Negative for POTS criteria'}
 
-Test completed by: ${navigator.userAgent.includes('Mobile') ? 'Mobile Device' : 'Desktop'}
 Generated: ${new Date().toLocaleString()}`;
   };
 

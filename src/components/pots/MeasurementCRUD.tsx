@@ -32,6 +32,7 @@ export const MeasurementCRUD: React.FC<MeasurementCRUDProps> = ({
   // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editTime, setEditTime] = useState('');
   const [editHR, setEditHR] = useState('');
   const [editSymptoms, setEditSymptoms] = useState<string[]>([]);
 
@@ -47,6 +48,7 @@ export const MeasurementCRUD: React.FC<MeasurementCRUDProps> = ({
 
   const startEdit = (index: number, measurement: Measurement) => {
     setEditingIndex(index);
+    setEditTime(measurement.label);
     setEditHR(measurement.pulseRate.toString());
     setEditSymptoms(measurement.symptoms ? measurement.symptoms.split(', ').filter(s => s) : []);
     setEditDialogOpen(true);
@@ -55,6 +57,7 @@ export const MeasurementCRUD: React.FC<MeasurementCRUDProps> = ({
   const cancelEdit = () => {
     setEditDialogOpen(false);
     setEditingIndex(null);
+    setEditTime('');
     setEditHR('');
     setEditSymptoms([]);
   };
@@ -67,8 +70,46 @@ export const MeasurementCRUD: React.FC<MeasurementCRUDProps> = ({
       toast.error('Heart rate must be between 30-200 bpm');
       return;
     }
+
+    // If time was changed, validate and update
+    if (editTime !== measurements[editingIndex].label) {
+      const timeMatch = editTime.match(/^(\d{1,2}):(\d{2})$/);
+      if (!timeMatch) {
+        toast.error('Time must be in format MM:SS (e.g., 2:30)');
+        return;
+      }
+      
+      const timeMinutes = parseInt(timeMatch[1]);
+      const timeSeconds = parseInt(timeMatch[2]);
+      
+      if (timeSeconds >= 60) {
+        toast.error('Seconds must be less than 60');
+        return;
+      }
+
+      if (timeMinutes > 10) {
+        toast.error('Time cannot exceed 10 minutes');
+        return;
+      }
+      
+      // Check for duplicate time (excluding current measurement)
+      const totalSeconds = timeMinutes * 60 + timeSeconds;
+      const hasExisting = measurements.some((m, idx) => 
+        idx !== editingIndex && m.totalSeconds === totalSeconds
+      );
+      if (hasExisting) {
+        toast.error('A measurement already exists at this time');
+        return;
+      }
+
+      // Delete old measurement and add new one with updated time
+      onDeleteMeasurement(editingIndex);
+      onAddMissedMeasurement(timeMinutes, timeSeconds, hr, editSymptoms);
+    } else {
+      // Just update HR and symptoms
+      onUpdateMeasurement(editingIndex, hr, editSymptoms);
+    }
     
-    onUpdateMeasurement(editingIndex, hr, editSymptoms);
     toast.success('Measurement updated successfully');
     cancelEdit();
   };
@@ -251,11 +292,21 @@ export const MeasurementCRUD: React.FC<MeasurementCRUDProps> = ({
             </p>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {editingIndex !== null && (
-              <div className="text-sm text-muted-foreground mb-4">
-                Time: {measurements[editingIndex]?.label}
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="edit-time">Time (MM:SS)</Label>
+              <Input
+                id="edit-time"
+                type="text"
+                value={editTime}
+                onChange={(e) => setEditTime(e.target.value)}
+                className="text-center"
+                placeholder="2:30"
+                pattern="^[0-9]{1,2}:[0-5][0-9]$"
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter time in MM:SS format (e.g., 2:30 for 2 minutes 30 seconds)
+              </p>
+            </div>
             
             <div className="space-y-2">
               <Label htmlFor="edit-hr">Heart Rate (bpm)</Label>

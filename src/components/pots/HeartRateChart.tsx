@@ -114,7 +114,7 @@ export const HeartRateChart: React.FC<HeartRateChartProps> = ({
             <ReferenceLine x={0} stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" />
             <ReferenceLine y={100} stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" />
             <Line 
-              type="monotone" 
+              type="linear" 
               dataKey="heartRate" 
               stroke="#FACC14" 
               strokeWidth={2}
@@ -124,7 +124,7 @@ export const HeartRateChart: React.FC<HeartRateChartProps> = ({
             {showTrendLine && trendData.length > 0 && (
               <Line 
                 data={trendData}
-                type="monotone" 
+                type="linear" 
                 dataKey="trendValue" 
                 stroke="hsl(var(--muted-foreground))" 
                 strokeWidth={1}
