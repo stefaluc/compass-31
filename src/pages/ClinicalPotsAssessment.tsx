@@ -17,6 +17,7 @@ import { RecentMeasurements } from '@/components/pots/RecentMeasurements';
 import { StatsCards } from '@/components/pots/StatsCards';
 import { HeartRateChart } from '@/components/pots/HeartRateChart';
 import { CompactSymptomSelector } from '@/components/pots/CompactSymptomSelector';
+import { MeasurementCRUD } from '@/components/pots/MeasurementCRUD';
 import { LinearProgress } from '@mui/material';
 
 // Standing Phase Component
@@ -851,6 +852,27 @@ Generated: ${new Date().toLocaleString()}`;
                 onToggleTrendLine={() => setShowTrendLine(!showTrendLine)}
                 onExportChart={exportChart}
               />
+
+              {/* All Measurements Management */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>All Measurements</CardTitle>
+                  <p className="text-muted-foreground">
+                    Complete measurement data with edit and management capabilities
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <MeasurementCRUD
+                    measurements={measurements}
+                    onUpdateMeasurement={handleUpdateMeasurement}
+                    onDeleteMeasurement={handleDeleteMeasurement}
+                    onAddMissedMeasurement={handleAddMissedMeasurement}
+                    showAddButton={true}
+                    title="Standing Phase Measurements"
+                    className="max-h-96 overflow-y-auto"
+                  />
+                </CardContent>
+              </Card>
             </div>
 
             {/* Fixed Bottom Footer */}
