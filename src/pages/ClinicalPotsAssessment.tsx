@@ -409,14 +409,21 @@ const ClinicalPotsAssessment: React.FC = () => {
   };
 
   const getStats = (): TestStats => {
-    if (measurements.length === 0) return { lowest: 0, highest: 0, delta: 0 };
-    const pulseRates = measurements.map(m => m.pulseRate).filter(pr => pr && !isNaN(pr));
-    if (pulseRates.length === 0) return { lowest: 0, highest: 0, delta: 0 };
-
-    const lowest = Math.min(...pulseRates);
-    const highest = Math.max(...pulseRates);
-    const delta = highest - lowest;
-    return { lowest, highest, delta };
+    // Get lowest from supine phase (either initial or lowest supine PR)
+    const supineHR = lowestSupinePR ? parseInt(lowestSupinePR) : (initialPR ? parseInt(initialPR) : 0);
+    
+    // Get highest from all measurements (standing phase)
+    const standingRates = measurements.map(m => m.pulseRate).filter(pr => pr && !isNaN(pr));
+    const highestStanding = standingRates.length > 0 ? Math.max(...standingRates) : 0;
+    
+    // Calculate delta between supine lowest and standing highest
+    const delta = supineHR > 0 && highestStanding > 0 ? highestStanding - supineHR : 0;
+    
+    return { 
+      lowest: supineHR, 
+      highest: highestStanding, 
+      delta 
+    };
   };
 
   const prepareChartData = (): ChartDataPoint[] => {
@@ -447,29 +454,28 @@ const ClinicalPotsAssessment: React.FC = () => {
         });
       }
     });
-    return chartData.sort((a, b) => a.time - b.time);
+    
+    const sortedData = chartData.sort((a, b) => a.time - b.time);
+    
+    // Add trend values to the same data points if trend line is enabled
+    if (showTrendLine && sortedData.length >= 2) {
+      const n = sortedData.length;
+      const sumX = sortedData.reduce((sum, d) => sum + d.time, 0);
+      const sumY = sortedData.reduce((sum, d) => sum + d.heartRate, 0);
+      const sumXY = sortedData.reduce((sum, d) => sum + d.time * d.heartRate, 0);
+      const sumXX = sortedData.reduce((sum, d) => sum + d.time * d.time, 0);
+
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+
+      sortedData.forEach(d => {
+        d.trendValue = slope * d.time + intercept;
+      });
+    }
+    
+    return sortedData;
   };
 
-  const getTrendLineData = (): TrendDataPoint[] => {
-    if (!showTrendLine) return [];
-    const chartData = prepareChartData();
-    const standingData = chartData.filter(d => !d.isPreTest);
-    if (standingData.length < 2) return [];
-
-    const n = standingData.length;
-    const sumX = standingData.reduce((sum, d) => sum + d.time, 0);
-    const sumY = standingData.reduce((sum, d) => sum + d.heartRate, 0);
-    const sumXY = standingData.reduce((sum, d) => sum + d.time * d.heartRate, 0);
-    const sumXX = standingData.reduce((sum, d) => sum + d.time * d.time, 0);
-
-    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-
-    return standingData.map(d => ({
-      time: d.time,
-      trendValue: slope * d.time + intercept
-    }));
-  };
 
   const generateSummary = (): string => {
     const stats = getStats();
@@ -546,7 +552,6 @@ Generated: ${new Date().toLocaleString()}`;
   };
 
   const chartData = prepareChartData();
-  const trendData = getTrendLineData();
   const stats = getStats();
   const nextMeasurementIn = phase === 'standing' && !isInitialHRRecording ? 30 - (timer % 30) : undefined;
 
@@ -792,7 +797,7 @@ Generated: ${new Date().toLocaleString()}`;
 
               <HeartRateChart
                 chartData={chartData}
-                trendData={trendData}
+                trendData={[]}
                 showTrendLine={showTrendLine}
                 onToggleTrendLine={() => setShowTrendLine(!showTrendLine)}
                 onExportChart={exportChart}

@@ -7,7 +7,7 @@ import { ChartDataPoint, TrendDataPoint } from '@/types/pots';
 
 interface HeartRateChartProps {
   chartData: ChartDataPoint[];
-  trendData: TrendDataPoint[];
+  trendData: TrendDataPoint[]; // kept for compatibility but not used
   showTrendLine: boolean;
   onToggleTrendLine: () => void;
   onExportChart: () => void;
@@ -17,12 +17,12 @@ const formatXAxisTick = (tickItem: number): string => {
   if (tickItem < 0) {
     return tickItem === -2 ? 'Initial' : 'Lowest';
   }
-  return `${Math.floor(tickItem)}:${((tickItem % 1) * 60).toFixed(0).padStart(2, '0')}`;
+  return tickItem.toString();
 };
 
 const generateXTicks = (): number[] => {
   const ticks = [-2, -1];
-  for (let i = 0; i <= 10; i += 0.5) {
+  for (let i = 0; i <= 10; i += 1) {
     ticks.push(i);
   }
   return ticks;
@@ -46,7 +46,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export const HeartRateChart: React.FC<HeartRateChartProps> = ({
   chartData,
-  trendData,
   showTrendLine,
   onToggleTrendLine,
   onExportChart
@@ -77,9 +76,14 @@ export const HeartRateChart: React.FC<HeartRateChartProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+        <ResponsiveContainer width="100%" height={500}>
+          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
+            <CartesianGrid 
+              strokeDasharray="1 1" 
+              stroke="hsl(var(--muted))" 
+              opacity={0.3}
+              horizontalPoints={[0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]}
+            />
             <XAxis 
               dataKey="time"
               type="number"
@@ -88,11 +92,17 @@ export const HeartRateChart: React.FC<HeartRateChartProps> = ({
               ticks={generateXTicks()}
               tickFormatter={formatXAxisTick}
               stroke="hsl(var(--muted-foreground))"
+              label={{ value: 'Time (minutes)', position: 'insideBottom', offset: -20 }}
+              fontSize={12}
+              interval={0}
+              angle={-30}
+              textAnchor="end"
             />
             <YAxis 
               label={{ value: 'Heart Rate (bpm)', angle: -90, position: 'insideLeft' }}
               domain={['dataMin - 10', 'dataMax + 10']}
               stroke="hsl(var(--muted-foreground))"
+              tickCount={8}
             />
             <Tooltip content={<CustomTooltip />} />
             <ReferenceLine x={0} stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" />
@@ -101,19 +111,19 @@ export const HeartRateChart: React.FC<HeartRateChartProps> = ({
               type="monotone" 
               dataKey="heartRate" 
               stroke="#FACC14" 
-              strokeWidth={4}
-              dot={{ fill: '#FACC14', strokeWidth: 2, r: 6 }}
-              activeDot={{ r: 8, fill: '#FACC14', stroke: '#ffffff', strokeWidth: 3 }}
+              strokeWidth={2}
+              dot={{ fill: '#FACC14', strokeWidth: 1, r: 4 }}
+              activeDot={{ r: 6, fill: '#FACC14', stroke: '#ffffff', strokeWidth: 2 }}
             />
-            {showTrendLine && trendData.length > 0 && (
+            {showTrendLine && (
               <Line 
-                data={trendData}
                 type="monotone" 
                 dataKey="trendValue" 
                 stroke="hsl(var(--muted-foreground))" 
-                strokeWidth={2}
-                strokeDasharray="8 8"
+                strokeWidth={1}
+                strokeDasharray="6 6"
                 dot={false}
+                connectNulls={false}
               />
             )}
           </LineChart>
