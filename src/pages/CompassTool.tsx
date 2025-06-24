@@ -94,7 +94,7 @@ function CompassTool() {
   return (
     <>
       <LinearProgress
-        sx={{ width: '100vw', position: 'fixed', left: 0, top: 64, zIndex: '40' }}
+        sx={{ width: '100vw', position: 'fixed', left: 0, top: 0, zIndex: '40' }}
         variant="determinate"
         value={(numQuestionsDone / numQuestions) * 100}
         color="secondary"
