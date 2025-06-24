@@ -7,7 +7,6 @@ import { ChartDataPoint, TrendDataPoint } from '@/types/pots';
 
 interface HeartRateChartProps {
   chartData: ChartDataPoint[];
-  trendData: TrendDataPoint[];
   showTrendLine: boolean;
   onToggleTrendLine: () => void;
   onExportChart: () => void;
@@ -46,7 +45,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export const HeartRateChart: React.FC<HeartRateChartProps> = ({
   chartData,
-  trendData,
   showTrendLine,
   onToggleTrendLine,
   onExportChart
@@ -111,8 +109,8 @@ export const HeartRateChart: React.FC<HeartRateChartProps> = ({
               tickCount={8}
             />
             <Tooltip content={<CustomTooltip />} />
-            <ReferenceLine x={0} stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" />
-            <ReferenceLine y={100} stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" />
+            <ReferenceLine x={0} stroke="#AAAAAA" strokeWidth={1} strokeDasharray="5 5" />
+            <ReferenceLine y={100} stroke="#BBBBBB" strokeWidth={1} strokeDasharray="5 5" />
             <Line 
               type="linear" 
               dataKey="heartRate" 
@@ -121,13 +119,12 @@ export const HeartRateChart: React.FC<HeartRateChartProps> = ({
               dot={{ fill: '#FACC14', strokeWidth: 1, r: 4 }}
               activeDot={{ r: 6, fill: '#FACC14', stroke: '#ffffff', strokeWidth: 2 }}
             />
-            {showTrendLine && trendData.length > 0 && (
+            {showTrendLine && (
               <Line 
-                data={trendData}
                 type="linear" 
                 dataKey="trendValue" 
-                stroke="hsl(var(--muted-foreground))" 
-                strokeWidth={1}
+                stroke="#000000" 
+                strokeWidth={2}
                 strokeDasharray="6 6"
                 dot={false}
                 connectNulls={false}

@@ -499,27 +499,26 @@ const ClinicalPotsAssessment: React.FC = () => {
         });
       }
     });
-    return chartData.sort((a, b) => a.time - b.time);
-  };
+    
+    const sortedData = chartData.sort((a, b) => a.time - b.time);
+    
+    // Add trend values to the same data if trend line is enabled
+    if (showTrendLine && sortedData.length >= 2) {
+      const n = sortedData.length;
+      const sumX = sortedData.reduce((sum, d) => sum + d.time, 0);
+      const sumY = sortedData.reduce((sum, d) => sum + d.heartRate, 0);
+      const sumXY = sortedData.reduce((sum, d) => sum + d.time * d.heartRate, 0);
+      const sumXX = sortedData.reduce((sum, d) => sum + d.time * d.time, 0);
 
-  const getTrendLineData = (): TrendDataPoint[] => {
-    if (!showTrendLine) return [];
-    const chartData = prepareChartData();
-    if (chartData.length < 2) return [];
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
 
-    const n = chartData.length;
-    const sumX = chartData.reduce((sum, d) => sum + d.time, 0);
-    const sumY = chartData.reduce((sum, d) => sum + d.heartRate, 0);
-    const sumXY = chartData.reduce((sum, d) => sum + d.time * d.heartRate, 0);
-    const sumXX = chartData.reduce((sum, d) => sum + d.time * d.time, 0);
-
-    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-
-    return chartData.map(d => ({
-      time: d.time,
-      trendValue: slope * d.time + intercept
-    }));
+      sortedData.forEach(d => {
+        d.trendValue = slope * d.time + intercept;
+      });
+    }
+    
+    return sortedData;
   };
 
 
@@ -596,7 +595,6 @@ Generated: ${new Date().toLocaleString()}`;
   };
 
   const chartData = prepareChartData();
-  const trendData = getTrendLineData();
   const stats = getStats();
   const nextMeasurementIn = phase === 'standing' && !isInitialHRRecording ? 30 - (timer % 30) : undefined;
 
@@ -845,7 +843,6 @@ Generated: ${new Date().toLocaleString()}`;
 
               <HeartRateChart
                 chartData={chartData}
-                trendData={trendData}
                 showTrendLine={showTrendLine}
                 onToggleTrendLine={() => setShowTrendLine(!showTrendLine)}
                 onExportChart={exportChart}
