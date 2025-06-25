@@ -119,7 +119,7 @@ function CompassTool() {
               <div key={item.id} className="box">
                 <h3>{item.domain}</h3>
                 <Divider />
-                <ol>
+                <ol className="list-decimal marker:font-bold">
                   {item.questions.map((question, j) => {
                     const key = `d${item.id.toString()}q${question.id.toString()}`;
                     const isOutOfRange = calcIsOutOfRange(question);
