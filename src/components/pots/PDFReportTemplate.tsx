@@ -19,10 +19,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 5,
+    marginBottom: 3,
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666666',
     marginBottom: 10,
   },
@@ -145,6 +145,7 @@ export const PDFReportTemplate: React.FC<PDFReportTemplateProps> = ({ data }) =>
     clinicName = 'Medical Clinic',
     clinicAddress,
     clinicPhone,
+    includeClinicalInterpretation,
   } = data;
 
   return (
@@ -152,8 +153,8 @@ export const PDFReportTemplate: React.FC<PDFReportTemplateProps> = ({ data }) =>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>POTS Assessment Report</Text>
-          <Text style={styles.subtitle}>NASA 10-Minute Lean Test Results</Text>
+          <Text style={styles.title}>NASA 10-Minute Lean</Text>
+          <Text style={styles.subtitle}>Summary of test results</Text>
           
           <View style={styles.twoColumn}>
             <View style={styles.column}>
@@ -171,24 +172,39 @@ export const PDFReportTemplate: React.FC<PDFReportTemplateProps> = ({ data }) =>
         {/* Key Results */}
         <View style={styles.resultBox}>
           <View style={styles.resultItem}>
-            <Text style={styles.resultLabel}>Heart Rate Increase</Text>
-            <Text style={stats.delta >= 30 ? styles.resultValuePositive : styles.resultValueNegative}>
-              Δ{stats.delta} bpm
-            </Text>
-          </View>
-          
-          <View style={styles.resultItem}>
-            <Text style={styles.resultLabel}>Test Result</Text>
-            <Text style={testResult === 'POSITIVE' ? styles.resultValuePositive : styles.resultValueNegative}>
-              {testResult}
-            </Text>
-          </View>
-          
-          <View style={styles.resultItem}>
-            <Text style={styles.resultLabel}>Baseline → Peak</Text>
+            <Text style={styles.resultLabel}>Lowest HR</Text>
             <Text style={styles.resultValue}>
-              {stats.lowest} → {stats.highest} bpm
+              {stats.lowest} bpm
             </Text>
+          </View>
+          
+          <View style={styles.resultItem}>
+            <Text style={styles.resultLabel}>Highest HR</Text>
+            <Text style={styles.resultValue}>
+              {stats.highest} bpm
+            </Text>
+          </View>
+          
+          <View style={styles.resultItem}>
+            <Text style={styles.resultLabel}>HR Increase</Text>
+            <Text style={stats.delta >= 30 ? styles.resultValuePositive : styles.resultValueNegative}>
+              +{stats.delta} bpm
+            </Text>
+          </View>
+        </View>
+
+        {/* Baseline Measurements */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Baseline Measurements</Text>
+          <View style={styles.twoColumn}>
+            <View style={styles.column}>
+              <Text>Blood Pressure: {initialBP.systolic}/{initialBP.diastolic} mmHg</Text>
+              <Text>Initial Pulse Rate: {initialPR} bpm</Text>
+            </View>
+            <View style={styles.lastColumn}>
+              <Text>Lowest Supine HR: {lowestSupinePR} bpm</Text>
+              <Text>Measurements Recorded: {measurements.length}</Text>
+            </View>
           </View>
         </View>
 
@@ -202,21 +218,6 @@ export const PDFReportTemplate: React.FC<PDFReportTemplateProps> = ({ data }) =>
             />
           </View>
         )}
-
-        {/* Baseline Measurements */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Baseline Measurements (Supine)</Text>
-          <View style={styles.twoColumn}>
-            <View style={styles.column}>
-              <Text>Blood Pressure: {initialBP.systolic}/{initialBP.diastolic} mmHg</Text>
-              <Text>Initial Pulse Rate: {initialPR} bpm</Text>
-            </View>
-            <View style={styles.lastColumn}>
-              <Text>Lowest Supine HR: {lowestSupinePR} bpm</Text>
-              <Text>Measurements Recorded: {measurements.length}</Text>
-            </View>
-          </View>
-        </View>
 
         {/* Measurements Table */}
         <View style={styles.section}>
@@ -235,7 +236,7 @@ export const PDFReportTemplate: React.FC<PDFReportTemplateProps> = ({ data }) =>
                 <Text style={styles.tableCell}>{measurement.label}</Text>
                 <Text style={styles.tableCell}>{measurement.pulseRate}</Text>
                 <Text style={styles.tableCellLeft}>
-                  {measurement.symptoms || 'None reported'}
+                  {measurement.symptoms || ''}
                 </Text>
               </View>
             ))}
@@ -250,19 +251,21 @@ export const PDFReportTemplate: React.FC<PDFReportTemplateProps> = ({ data }) =>
           </View>
         </View>
 
-        {/* Clinical Interpretation */}
-        <View style={styles.interpretation}>
-          <Text style={styles.sectionTitle}>Clinical Interpretation</Text>
-          <Text>
-            {testResult === 'POSITIVE' 
-              ? `The heart rate increase of ${stats.delta} bpm meets the criteria for POTS (≥30 bpm increase). This suggests possible orthostatic intolerance.`
-              : `The heart rate increase of ${stats.delta} bpm does not meet the criteria for POTS (<30 bpm increase). This is within normal limits.`
-            }
-          </Text>
-          <Text style={{ marginTop: 8, fontSize: 10, fontStyle: 'italic' }}>
-            Note: This test result should be interpreted by a qualified healthcare provider in conjunction with clinical symptoms and other diagnostic findings.
-          </Text>
-        </View>
+        {/* Clinical Interpretation - Conditional */}
+        {includeClinicalInterpretation && (
+          <View style={styles.interpretation}>
+            <Text style={styles.sectionTitle}>Clinical Interpretation</Text>
+            <Text>
+              {testResult === 'POSITIVE' 
+                ? `The heart rate increase of ${stats.delta} bpm meets the criteria for POTS (>=30 bpm increase). This suggests possible orthostatic intolerance.`
+                : `The heart rate increase of ${stats.delta} bpm does not meet the criteria for POTS (<30 bpm increase). This is within normal limits.`
+              }
+            </Text>
+            <Text style={{ marginTop: 8, fontSize: 10, fontStyle: 'italic' }}>
+              Note: This test result should be interpreted by a qualified healthcare provider in conjunction with clinical symptoms and other diagnostic findings.
+            </Text>
+          </View>
+        )}
 
         {/* Footer */}
         <View style={styles.footer}>

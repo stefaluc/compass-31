@@ -873,7 +873,7 @@ Generated: ${new Date().toLocaleString()}`;
 
             {/* Fixed Bottom Footer */}
             <div className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg z-50">
-              <div className="max-w-4xl mx-auto p-4">
+              <div className="max-w-3xl mx-auto p-4">
                 <div className="flex items-center justify-between gap-3">
                   <Button
                     onClick={resetTest}
@@ -899,7 +899,7 @@ Generated: ${new Date().toLocaleString()}`;
                     <Button
                       onClick={exportChart}
                       size="lg"
-                      variant="outline"
+                      variant="secondary"
                       className="h-12 sm:h-14 text-base px-4"
                     >
                       <Download size={18} className="sm:mr-2" />
@@ -908,7 +908,7 @@ Generated: ${new Date().toLocaleString()}`;
                     <Button
                       onClick={copyToClipboard}
                       size="lg"
-                      variant="outline"
+                      variant="secondary"
                       className="h-12 sm:h-14 text-base px-4"
                     >
                       <Copy size={18} className="sm:mr-2" />

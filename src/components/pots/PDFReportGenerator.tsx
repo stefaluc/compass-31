@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileDown, Loader2 } from 'lucide-react';
+import { AlertTriangle, FileDown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PDFReportTemplate } from './PDFReportTemplate';
@@ -58,11 +58,13 @@ export const PDFReportGenerator: React.FC<PDFReportGeneratorProps> = ({
   // PDF generation options
   const [options, setOptions] = useState<PDFGenerationOptions>({
     includeChart: true,
-    includeAllMeasurements: true,
+    includeAllMeasurements: false,
     includeSymptoms: true,
     format: 'A4',
     orientation: 'portrait',
   });
+  
+  const [includeClinicalInterpretation, setIncludeClinicalInterpretation] = useState(false);
   
   // Clinic information (editable)
   const [clinicInfo, setClinicInfo] = useState({
@@ -70,6 +72,16 @@ export const PDFReportGenerator: React.FC<PDFReportGeneratorProps> = ({
     address: clinicAddress || '',
     phone: clinicPhone || '',
   });
+
+  // Format date from YYYY-MM-DD to readable format
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
 
   const generatePDFReport = async () => {
     if (!patientName.trim()) {
@@ -100,7 +112,7 @@ export const PDFReportGenerator: React.FC<PDFReportGeneratorProps> = ({
       // Prepare report data
       const reportData: PDFReportData = {
         patientName: patientName.trim(),
-        testDate,
+        testDate: formatDate(testDate),
         initialBP,
         initialPR,
         lowestSupinePR,
@@ -115,6 +127,7 @@ export const PDFReportGenerator: React.FC<PDFReportGeneratorProps> = ({
         clinicName: clinicInfo.name,
         clinicAddress: clinicInfo.address || undefined,
         clinicPhone: clinicInfo.phone || undefined,
+        includeClinicalInterpretation,
       };
 
       // Generate PDF
@@ -160,13 +173,13 @@ export const PDFReportGenerator: React.FC<PDFReportGeneratorProps> = ({
       
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <p className="flex items-center gap-2 text-xl font-bold text-foreground">
             <FileDown className="h-5 w-5" />
             Generate Patient Report
-          </DialogTitle>
+          </p>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
+        <div className="space-y-4">
           {/* Clinic Information */}
           <div className="space-y-3">
             <Label className="text-sm font-medium">Clinic Information</Label>
@@ -213,18 +226,36 @@ export const PDFReportGenerator: React.FC<PDFReportGeneratorProps> = ({
                   onCheckedChange={(checked) => updateOption('includeAllMeasurements', checked)}
                 />
                 <Label htmlFor="include-all-measurements" className="text-sm">
-                  Include all measurements (vs. first 15)
+                  Include all measurements
                 </Label>
               </div>
+              {options.includeAllMeasurements && (
+                <div className="text-xs text-amber-600 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Including all measurements may result in multiple pages
+                </div>
+              )}
               
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="include-symptoms"
                   checked={options.includeSymptoms}
                   onCheckedChange={(checked) => updateOption('includeSymptoms', checked)}
+                  disabled={!options.includeAllMeasurements}
                 />
-                <Label htmlFor="include-symptoms" className="text-sm">
+                <Label htmlFor="include-symptoms" className={`text-sm ${!options.includeAllMeasurements ? 'text-muted-foreground' : ''}`}>
                   Include recorded symptoms
+                </Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="include-clinical-interpretation"
+                  checked={includeClinicalInterpretation}
+                  onCheckedChange={(checked) => setIncludeClinicalInterpretation(checked as boolean)}
+                />
+                <Label htmlFor="include-clinical-interpretation" className="text-sm">
+                  Include clinical interpretation
                 </Label>
               </div>
             </div>
@@ -235,9 +266,9 @@ export const PDFReportGenerator: React.FC<PDFReportGeneratorProps> = ({
             <p>Report will include:</p>
             <ul className="list-disc list-inside mt-1 space-y-1">
               <li>Patient information and test results</li>
-              <li>Clinical interpretation</li>
+              {includeClinicalInterpretation && <li>Clinical interpretation</li>}
               {options.includeChart && <li>Heart rate graph</li>}
-              <li>{options.includeAllMeasurements ? 'All' : 'First 15'} measurements</li>
+              {options.includeAllMeasurements && <li>All measurements</li>}
               {options.includeSymptoms && <li>Symptom data</li>}
             </ul>
           </div>

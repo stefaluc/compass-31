@@ -20,6 +20,7 @@ export interface PDFReportData {
   // Clinical Information
   clinicalInterpretation: string;
   testResult: 'POSITIVE' | 'NEGATIVE';
+  includeClinicalInterpretation: boolean;
   
   // Meta Information
   generatedAt: string;
