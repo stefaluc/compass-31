@@ -18,6 +18,7 @@ import { StatsCards } from '@/components/pots/StatsCards';
 import { HeartRateChart } from '@/components/pots/HeartRateChart';
 import { CompactSymptomSelector } from '@/components/pots/CompactSymptomSelector';
 import { MeasurementCRUD } from '@/components/pots/MeasurementCRUD';
+import { PDFReportGenerator } from '@/components/pots/PDFReportGenerator';
 import { LinearProgress } from '@mui/material';
 
 // Standing Phase Component
@@ -872,7 +873,7 @@ Generated: ${new Date().toLocaleString()}`;
 
             {/* Fixed Bottom Footer */}
             <div className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg z-50">
-              <div className="max-w-4xl mx-auto p-4">
+              <div className="max-w-3xl mx-auto p-4">
                 <div className="flex items-center justify-between gap-3">
                   <Button
                     onClick={resetTest}
@@ -884,21 +885,34 @@ Generated: ${new Date().toLocaleString()}`;
                     <span className="hidden sm:block">New Test</span>
                   </Button>
                   <div className="flex-1 flex justify-end gap-3">
+                    <PDFReportGenerator
+                      patientName={patientName}
+                      testDate={testDate}
+                      initialBP={initialBP}
+                      initialPR={initialPR}
+                      lowestSupinePR={lowestSupinePR}
+                      measurements={measurements}
+                      stats={stats}
+                      size="lg"
+                      className="h-12 sm:h-14 text-base flex-1"
+                    />
                     <Button
                       onClick={exportChart}
                       size="lg"
-                      className="h-12 sm:h-14 text-base flex-1 bg-secondary"
+                      variant="secondary"
+                      className="h-12 sm:h-14 text-base px-4"
                     >
                       <Download size={18} className="sm:mr-2" />
-                      <span className="hidden sm:block">Export</span> Chart
+                      <span className="hidden sm:block">Chart</span>
                     </Button>
                     <Button
                       onClick={copyToClipboard}
                       size="lg"
-                      className="h-12 sm:h-14 text-base flex-1"
+                      variant="secondary"
+                      className="h-12 sm:h-14 text-base px-4"
                     >
                       <Copy size={18} className="sm:mr-2" />
-                      <span className="hidden sm:block">Copy</span> Summary
+                      <span className="hidden sm:block">Text</span>
                     </Button>
                   </div>
                 </div>
