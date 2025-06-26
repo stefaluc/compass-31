@@ -116,7 +116,7 @@ export const PDFReportGenerator: React.FC<PDFReportGeneratorProps> = ({
         initialBP,
         initialPR,
         lowestSupinePR,
-        measurements: options.includeAllMeasurements ? measurements : measurements.slice(0, 15),
+        measurements: options.includeAllMeasurements ? measurements : [],
         stats,
         chartImage: chartImage || undefined,
         clinicalInterpretation: stats.delta >= 30 

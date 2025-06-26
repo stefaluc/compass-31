@@ -220,7 +220,8 @@ export const PDFReportTemplate: React.FC<PDFReportTemplateProps> = ({ data }) =>
         )}
 
         {/* Measurements Table */}
-        <View style={styles.section}>
+        {measurements.length > 0 && (
+          <View style={styles.section}>
           <Text style={styles.sectionTitle}>Standing Phase Measurements</Text>
           <View style={styles.measurementsTable}>
             {/* Table Header */}
@@ -231,7 +232,7 @@ export const PDFReportTemplate: React.FC<PDFReportTemplateProps> = ({ data }) =>
             </View>
             
             {/* Table Rows - Show first 15 measurements to fit on page */}
-            {measurements.slice(0, 15).map((measurement, index) => (
+            {measurements.slice(0, 30).map((measurement, index) => (
               <View key={index} style={styles.tableRow}>
                 <Text style={styles.tableCell}>{measurement.label}</Text>
                 <Text style={styles.tableCell}>{measurement.pulseRate}</Text>
@@ -241,15 +242,15 @@ export const PDFReportTemplate: React.FC<PDFReportTemplateProps> = ({ data }) =>
               </View>
             ))}
             
-            {measurements.length > 15 && (
+            {measurements.length > 30 && (
               <View style={styles.tableRow}>
                 <Text style={styles.tableCellLeft}>
-                  ... and {measurements.length - 15} more measurements
+                  ... and {measurements.length - 30} more measurements
                 </Text>
               </View>
             )}
           </View>
-        </View>
+        </View>)}
 
         {/* Clinical Interpretation - Conditional */}
         {includeClinicalInterpretation && (
