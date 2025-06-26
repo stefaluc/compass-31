@@ -165,6 +165,7 @@ export const data = [
         questionText: `In the past year, have you been constipated?`,
         value: null,
         pointsKey: [1, 0],
+        dependentAnswer: 2,
       },
       {
         id: 21,
