@@ -1,11 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
   DialogContent,
@@ -73,7 +70,7 @@ function QuestionRow({
             const v = e.target.value;
             onAnswer(v === '' ? null : parseInt(v, 10));
           }}
-          className="w-24"
+          className="w-24 font-mono tabular-nums"
         />
         {isNA && (
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -128,32 +125,47 @@ function CompassTool() {
         aria-label="Survey progress"
         className="fixed left-0 top-0 z-50 h-1 w-full rounded-none"
       />
-      <div className="py-6">
-        <h1 className="text-2xl font-extrabold sm:text-3xl">
-          <span className="text-primary">COMPASS-31</span> Scoring
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-          The Composite Autonomic Symptom Score. Enter the patient's selected
-          answer number for each question; domain scores update as you type.
-        </p>
-      </div>
+      <div className="mt-6 overflow-hidden rounded-lg bg-card ring-1 ring-foreground/10">
+        <div className="flex flex-col gap-4 border-b-2 border-primary px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-7">
+          <div>
+            <h1 className="text-2xl font-extrabold sm:text-3xl">
+              <span className="text-primary">COMPASS-31</span> Scoring
+            </h1>
+            <p className="mt-1 max-w-xl text-sm text-muted-foreground sm:text-base">
+              The Composite Autonomic Symptom Score. Enter the patient's
+              selected answer number for each question; domain scores update as
+              you type.
+            </p>
+          </div>
+          <div className="shrink-0 rounded-md border-[1.5px] border-primary px-3.5 py-2 text-primary sm:text-right">
+            <span className="block font-mono text-[10px] uppercase tracking-[0.14em] opacity-75">
+              Weighted total
+            </span>
+            <span className="font-mono text-lg font-semibold tabular-nums">
+              {weightedTotal}
+              <span className="text-xs font-normal opacity-70"> / {COMPASS31_WEIGHTED_MAX}</span>
+            </span>
+          </div>
+        </div>
 
-      <div className="space-y-6">
-        {COMPASS_QUESTIONNAIRE.map((domain) => {
+        {COMPASS_QUESTIONNAIRE.map((domain, index) => {
           const doneInDomain = questionsDone(domain.questions, answers);
           const complete = doneInDomain === domain.questions.length;
           const score = domainScores[domain.key] ?? 0;
 
           return (
-            <Card key={domain.key}>
-              <CardHeader className="flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-lg sm:text-xl">{domain.domain}</CardTitle>
-                <Badge variant={complete ? 'default' : 'outline'} className="tabular-nums">
-                  {score} / {domain.maxScore}
-                </Badge>
-              </CardHeader>
-              <Separator />
-              <CardContent>
+            <section key={domain.key}>
+              <div className="flex items-baseline justify-between gap-3 border-b bg-section px-5 py-2 text-section-foreground sm:px-7">
+                <h2 className="text-xs font-semibold uppercase tracking-[0.1em]">
+                  <span className="mr-2.5 font-mono opacity-60">D{index + 1}</span>
+                  {domain.domain}
+                </h2>
+                <span className="font-mono text-xs tabular-nums">
+                  RAW {score}/{domain.maxScore}
+                  {complete && <span aria-label="domain complete"> ✓</span>}
+                </span>
+              </div>
+              <div className="border-b px-5 last:border-b-0 sm:px-7">
                 <ol className="list-decimal divide-y pl-5 marker:font-semibold marker:text-primary">
                   {domain.questions.map((q) => (
                     <QuestionRow
@@ -164,8 +176,8 @@ function CompassTool() {
                     />
                   ))}
                 </ol>
-              </CardContent>
-            </Card>
+              </div>
+            </section>
           );
         })}
       </div>

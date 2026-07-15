@@ -59,7 +59,7 @@ function ReadingCells({
     <td className="p-1.5 sm:p-2">
       <div className="flex flex-col items-center gap-0.5">
         {readOnly ? (
-          <span className="tabular-nums">{reading[field] ?? '—'}</span>
+          <span className="font-mono tabular-nums">{reading[field] ?? '—'}</span>
         ) : (
           <Input
             type="number"
@@ -68,11 +68,11 @@ function ReadingCells({
             placeholder={placeholder}
             aria-label={`${rowLabel} ${field}`}
             onChange={(e) => onChange?.({ [field]: numberOrNull(e.target.value) })}
-            className="h-9 w-16 px-1 text-center text-sm sm:w-20"
+            className="h-9 w-16 px-1 text-center font-mono text-sm tabular-nums sm:w-20"
           />
         )}
         {baseline && (
-          <span className="text-xs tabular-nums text-muted-foreground">
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">
             {formatChange(changeValue)}
           </span>
         )}
@@ -115,7 +115,7 @@ export function ActiveStandTable({
     <div className="overflow-x-auto">
       <table className="w-full min-w-[560px] border-collapse text-sm">
         <thead>
-          <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+          <tr className="border-b text-left text-[11px] uppercase tracking-[0.11em] text-muted-foreground">
             <th className="p-2 font-medium">Time</th>
             <th className="p-2 text-center font-medium">Systolic</th>
             <th className="p-2 text-center font-medium">Diastolic</th>
@@ -124,7 +124,7 @@ export function ActiveStandTable({
           </tr>
         </thead>
         <tbody>
-          <tr className="border-b bg-muted/40">
+          <tr className="border-b bg-section/60">
             <td className="whitespace-nowrap p-2 font-medium">
               Supine baseline
               <span className="block text-xs font-normal text-muted-foreground">

@@ -11,7 +11,6 @@ import {
   Copy,
   RotateCcw,
   CheckCircle,
-  AlertTriangle,
   Clock,
   Play,
   Pause,
@@ -103,18 +102,13 @@ function StandingPhase() {
     <Card>
       <CardContent>
         <div className="mb-6 flex flex-col gap-4 rounded-lg bg-muted/50 p-4 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <AlertTriangle className="h-6 w-6" aria-hidden />
-            </div>
-            <div>
-              <p className="text-xl font-bold sm:text-2xl">Standing Test Phase</p>
-              <p className="text-sm text-muted-foreground sm:text-base">
-                {isInitialHRRecording
-                  ? 'Record initial standing heart rate to start timer'
-                  : 'Record heart rate every 30 seconds'}
-              </p>
-            </div>
+          <div>
+            <p className="text-xl font-bold sm:text-2xl">Standing Test Phase</p>
+            <p className="text-sm text-muted-foreground sm:text-base">
+              {isInitialHRRecording
+                ? 'Record initial standing heart rate to start timer'
+                : 'Record heart rate every 30 seconds'}
+            </p>
           </div>
           <div className="sm:ml-auto">
             <Badge variant={isInitialHRRecording ? 'outline' : isRunning ? 'default' : 'secondary'}>
@@ -125,7 +119,7 @@ function StandingPhase() {
 
         {!isInitialHRRecording && (
           <div className="mb-8 text-center">
-            <div className="mb-4 text-6xl font-bold tabular-nums sm:text-8xl">
+            <div className="mb-4 font-mono text-6xl font-bold tabular-nums sm:text-7xl">
               {formatTimer(timer)}
             </div>
             <Progress
@@ -133,8 +127,8 @@ function StandingPhase() {
               className="mx-auto mb-4 h-3 max-w-xl sm:h-4"
               aria-label="Standing phase progress"
             />
-            <div className="text-sm text-muted-foreground">
-              Next measurement in: {nextMeasurementIn}s | Recorded: {measurements.length}
+            <div className="font-mono text-sm tabular-nums text-muted-foreground">
+              Next measurement in: {nextMeasurementIn}s · Recorded: {measurements.length}
             </div>
           </div>
         )}
@@ -179,7 +173,7 @@ function StandingPhase() {
                     handleRecord();
                   }
                 }}
-                className="h-16 text-center !text-2xl"
+                className="h-16 text-center font-mono !text-2xl tabular-nums"
                 placeholder="e.g., 85"
                 min={30}
                 max={200}
@@ -333,7 +327,7 @@ function EditableStat({
             onChange={(e) =>
               onChange(e.target.value === '' ? null : parseInt(e.target.value, 10))
             }
-            className={`h-11 w-24 border-dashed text-center !text-2xl font-bold ${
+            className={`h-11 w-24 border-dashed text-center font-mono !text-2xl font-bold tabular-nums ${
               highlight ? 'text-primary' : ''
             }`}
           />
@@ -637,7 +631,7 @@ Generated: ${new Date().toLocaleString()}`;
               </div>
 
               <div className="mb-8 text-center">
-                <div className="mb-4 text-6xl font-bold tabular-nums sm:text-8xl">
+                <div className="mb-4 font-mono text-6xl font-bold tabular-nums sm:text-7xl">
                   {formatTimer(timer)}
                 </div>
                 <Progress
@@ -661,7 +655,7 @@ Generated: ${new Date().toLocaleString()}`;
                     inputMode="numeric"
                     value={lowestSupinePR}
                     onChange={(e) => store.set({ lowestSupinePR: e.target.value })}
-                    className="mt-3 h-16 text-center !text-2xl"
+                    className="mt-3 h-16 text-center font-mono !text-2xl tabular-nums"
                     placeholder="e.g., 68 bpm"
                   />
                   {lowestSupinePR && (
@@ -813,7 +807,7 @@ Generated: ${new Date().toLocaleString()}`;
                   />
                   <Card>
                     <CardContent className="p-4 text-center sm:p-6">
-                      <div className="text-2xl font-bold text-primary sm:text-3xl">
+                      <div className="font-mono text-2xl font-bold tabular-nums text-primary sm:text-3xl">
                         {stats.delta ?? '—'}
                       </div>
                       <div className="text-sm font-medium text-muted-foreground">

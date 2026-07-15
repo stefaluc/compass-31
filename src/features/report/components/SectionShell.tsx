@@ -5,7 +5,6 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { TextAreaField } from './fields';
 import { ChevronDown } from 'lucide-react';
@@ -40,26 +39,28 @@ export function SectionShell({
       <Collapsible defaultOpen={defaultOpen}>
         <CollapsibleTrigger
           className={cn(
-            'group flex w-full items-center justify-between gap-3 px-4 py-4 text-left sm:px-6',
-            'transition-colors hover:bg-accent/50',
+            'group flex w-full items-center justify-between gap-3 bg-section px-4 py-3 text-left text-section-foreground sm:px-6',
+            'transition-colors hover:bg-section/70',
           )}
         >
           <div>
-            <span className="text-base font-bold sm:text-lg">{title}</span>
+            <span className="text-sm font-semibold uppercase tracking-[0.08em]">
+              {title}
+            </span>
             {subtitle && (
-              <span className="block text-xs text-muted-foreground sm:text-sm">
+              <span className="block text-xs normal-case tracking-normal text-muted-foreground">
                 {subtitle}
               </span>
             )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {hasContent && (
-              <Badge variant="secondary" className="hidden sm:inline-flex">
-                documented
-              </Badge>
+              <span className="hidden font-mono text-[10px] uppercase tracking-[0.1em] opacity-80 sm:inline">
+                documented ✓
+              </span>
             )}
             <ChevronDown
-              className="h-5 w-5 text-muted-foreground transition-transform group-data-[panel-open]:rotate-180"
+              className="h-4 w-4 opacity-70 transition-transform group-data-[panel-open]:rotate-180"
               aria-hidden
             />
           </div>

@@ -10,24 +10,22 @@ const NAV_ITEMS = [
 ];
 
 /**
- * BR-03: clean text-based header using the working site name until the
- * final logo is ready. (Open question: final name/domain — "Autonomic
- * Compass" is the preferred option from §4.1 and is used as the working
- * name throughout.)
+ * BR-03: the app-wide "instrument bar" — dark maroon with underline tabs,
+ * using the working site name until the final logo is ready. (Open question:
+ * final name/domain — "Autonomic Compass" is the preferred option from §4.1
+ * and is used as the working name throughout.)
  */
 function Navbar() {
   const location = useLocation();
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-0 px-4 sm:px-6">
+    <header className="sticky top-0 z-40 bg-bar text-bar-foreground">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-stretch gap-x-6 px-4 sm:px-6">
         <Link
           to="/"
-          className="flex h-14 items-center gap-2 transition-opacity hover:opacity-80"
+          className="flex h-14 items-center gap-2.5 transition-opacity hover:opacity-90"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Compass className="h-5 w-5" aria-hidden />
-          </span>
+          <Compass className="h-5 w-5" aria-hidden />
           <span className="font-heading text-lg font-extrabold tracking-tight">
             Autonomic&nbsp;Compass
           </span>
@@ -35,7 +33,7 @@ function Navbar() {
 
         <nav
           aria-label="Tools"
-          className="-mx-4 flex w-full items-center gap-1 overflow-x-auto px-4 pb-2 sm:mx-0 sm:ml-auto sm:w-auto sm:px-0 sm:pb-0"
+          className="-mx-4 flex w-full items-stretch overflow-x-auto px-4 sm:mx-0 sm:ml-auto sm:w-auto sm:px-0"
         >
           {NAV_ITEMS.map((item) => {
             const active = location.pathname.startsWith(item.to);
@@ -45,10 +43,11 @@ function Navbar() {
                 to={item.to}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  'flex items-center whitespace-nowrap border-b-2 px-3 pt-0.5 text-sm font-medium transition-colors',
+                  'h-11 sm:h-14',
                   active
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    ? 'border-bar-foreground/70 text-bar-foreground'
+                    : 'border-transparent text-bar-muted hover:text-bar-foreground',
                 )}
               >
                 {item.label}

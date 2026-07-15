@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ClipboardPlus, GitCompareArrows, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useReportStore } from '../store';
 
 /** RG-01: two large starting buttons select the workflow immediately. */
@@ -11,11 +11,11 @@ export function StartScreen() {
 
   return (
     <div className="mx-auto max-w-2xl py-8 sm:py-16">
-      <div className="mb-8 text-center sm:mb-12">
-        <h1 className="text-2xl font-extrabold sm:text-4xl">
-          Patient Evaluation Report
+      <div className="mb-8 sm:mb-10">
+        <h1 className="text-2xl font-extrabold sm:text-3xl">
+          <span className="text-primary">Patient Evaluation</span> Report
         </h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="mt-2 max-w-xl text-muted-foreground">
           Assemble findings into one polished PDF for the patient and the medical
           record. Nothing is uploaded — all data stays on this device.
         </p>
@@ -44,10 +44,14 @@ export function StartScreen() {
         <button
           type="button"
           onClick={() => startReport('initial')}
-          className="group rounded-xl border bg-card p-6 text-left shadow-xs transition-all hover:border-primary/40 hover:shadow-md sm:p-8"
+          className="group rounded-lg border bg-card p-6 text-left shadow-xs transition-all hover:border-primary/50 hover:shadow-md sm:p-8"
         >
-          <ClipboardPlus className="mb-4 h-10 w-10 text-primary" aria-hidden />
-          <p className="text-lg font-bold sm:text-xl">Create Initial Evaluation Report</p>
+          <p className="mb-3 font-mono text-xs font-semibold tracking-wider text-primary">
+            INITIAL
+          </p>
+          <p className="font-heading text-lg font-bold sm:text-xl">
+            Create Initial Evaluation Report
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
             First visit: full evaluation with all clinical sections.
           </p>
@@ -55,10 +59,14 @@ export function StartScreen() {
         <button
           type="button"
           onClick={() => startReport('re-evaluation')}
-          className="group rounded-xl border bg-card p-6 text-left shadow-xs transition-all hover:border-primary/40 hover:shadow-md sm:p-8"
+          className="group rounded-lg border bg-card p-6 text-left shadow-xs transition-all hover:border-primary/50 hover:shadow-md sm:p-8"
         >
-          <GitCompareArrows className="mb-4 h-10 w-10 text-primary" aria-hidden />
-          <p className="text-lg font-bold sm:text-xl">Create Re-evaluation Report</p>
+          <p className="mb-3 font-mono text-xs font-semibold tracking-wider text-primary">
+            RE-EVAL
+          </p>
+          <p className="font-heading text-lg font-bold sm:text-xl">
+            Create Re-evaluation Report
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
             Compare Initial, Last Re-evaluation, and Current findings side by side.
           </p>
