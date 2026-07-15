@@ -1,278 +1,238 @@
-import LinearProgress from '@mui/material/LinearProgress';
-import TextField from '@mui/material/TextField';
-import InfoIcon from '@mui/icons-material/Info';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Info, FileText, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  COMPASS_QUESTIONNAIRE,
+  TOTAL_QUESTIONS,
+  domainScore,
+  isAnswerInRange,
+  isQuestionNA,
+  questionsDone,
+  type CompassQuestion,
+} from '@/features/compass31/questions';
+import { useCompassStore } from '@/features/compass31/store';
+import {
+  COMPASS31_RAW_MAX,
+  COMPASS31_WEIGHTED_MAX,
+  compass31RawTotal,
+  compass31SeverityLabel,
+  compass31WeightedTotal,
+  type Compass31DomainScores,
+} from '@/lib/clinical/compass31';
 
-import React from 'react';
-import { Button, Divider, Typography } from '@mui/material';
-import { data, MAX_SCORE } from '@/utils/data';
-import logo from '@/assets/logo.png';
+function QuestionRow({
+  question,
+  answer,
+  onAnswer,
+}: {
+  question: CompassQuestion;
+  answer: number | null;
+  onAnswer: (value: number | null) => void;
+}) {
+  const answers = useCompassStore((s) => s.answers);
+  const isNA = isQuestionNA(question, answers);
+  const outOfRange = !isNA && answer != null && !isAnswerInRange(question, answer);
 
-const calcIsOutOfRange = (question: any) => (
-  question.value != null &&
-  (question.value <= 0 ||
-    question.value > question.pointsKey.length)
-);
-
-const calcIsInRange = (question: any) => (
-  question.value != null &&
-  (question.value > 0 &&
-    question.value <= question.pointsKey.length)
-);
-
-const countQuestionsDone = (questionList: any[]) => {
-  let questionCount = 0;
-
-  for (const question of questionList) {
-    if (calcIsInRange(question)) {
-      questionCount++;
-    } else if (question.dependent) {
-      const dependentQuestion = questionList.find(q => q.id === question.dependent);
-      if (dependentQuestion.value === dependentQuestion.dependentAnswer) {
-        questionCount++;
-      }
-    }
-  }
-
-  return questionCount;
+  return (
+    <li value={question.id} className="space-y-2 py-3">
+      <p className="text-sm sm:text-base">{question.text}</p>
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={question.pointsKey.length}
+          disabled={isNA}
+          value={isNA ? '' : (answer ?? '')}
+          placeholder={isNA ? 'N/A' : `1–${question.pointsKey.length}`}
+          aria-label={`Answer for question ${question.id}`}
+          aria-invalid={outOfRange || undefined}
+          onChange={(e) => {
+            const v = e.target.value;
+            onAnswer(v === '' ? null : parseInt(v, 10));
+          }}
+          className="w-24"
+        />
+        {isNA && (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            Skipped — depends on question {question.dependsOn}
+          </span>
+        )}
+        {question.type === 'checkmark' && !isNA && (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            Enter 1 if none checked, 2 if one, 3 if both
+          </span>
+        )}
+      </div>
+      {outOfRange && (
+        <p className="text-sm font-medium text-destructive">
+          This number is not a valid patient answer.
+        </p>
+      )}
+    </li>
+  );
 }
 
 function CompassTool() {
-  const [formData, setFormData] = React.useState(data);
-  const [orthoCount, setOrthoCount] = React.useState(0);
-  const [orthoScore, setOrthoScore] = React.useState(0);
-  const [open, setOpen] = React.useState(false);
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const { answers, setAnswer, reset } = useCompassStore();
+  const [showScore, setShowScore] = useState(false);
 
-  const numQuestions = data.reduce((count, item) => count + item.questions.length, 0);
-  const numQuestionsDone = countQuestionsDone(formData.flatMap(item => item.questions));
-  const totalScore = formData.reduce((count, item) => count + item.currentScore, 0);
-  const totalScoreComplex = formData.reduce((count, item) => count + (item.currentScore * item.multiplier), 0);
+  const domainScores = useMemo(() => {
+    const scores: Compass31DomainScores = {};
+    for (const d of COMPASS_QUESTIONNAIRE) scores[d.key] = domainScore(d, answers);
+    return scores;
+  }, [answers]);
 
-  React.useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+  const done = questionsDone(
+    COMPASS_QUESTIONNAIRE.flatMap((d) => d.questions),
+    answers,
+  );
+  const rawTotal = compass31RawTotal(domainScores);
+  const weightedTotal = compass31WeightedTotal(domainScores);
+  const severity = compass31SeverityLabel(rawTotal);
 
-    const animateCount = () => {
-      if (orthoCount < orthoScore) {
-        setOrthoCount((prevCount) => prevCount + 1);
-      } else if (orthoCount > orthoScore) {
-        setOrthoCount((prevCount) => prevCount - 1);
-      } else {
-        clearInterval(intervalId);
-      }
-    };
-
-    intervalId = setInterval(animateCount, 20);
-
-    return () => clearInterval(intervalId);
-  }, [orthoCount, orthoScore]);
-
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    window.location.reload();
+  const handleReset = () => {
+    reset();
+    setShowScore(false);
+    toast.info('Ready for a new COMPASS-31 survey');
   };
 
   return (
-    <>
-      <LinearProgress
-        sx={{ width: '100vw', position: 'fixed', left: 0, top: 0, zIndex: '40' }}
-        variant="determinate"
-        value={(numQuestionsDone / numQuestions) * 100}
-        color="secondary"
+    <div className="mx-auto max-w-3xl px-4 pb-24 sm:px-6">
+      <Progress
+        value={(done / TOTAL_QUESTIONS) * 100}
+        aria-label="Survey progress"
+        className="fixed left-0 top-0 z-50 h-1 w-full rounded-none"
       />
-      <div className="App">
-        <div className="title-container pt-2">
-          <div className="">
-            <h2 className="text-xl font-bold mb-2">
-              <span className='title'>COMPASS-31</span> Assessment
-            </h2>
-            <p className="text-muted-foreground mb-4 text-muted-foreground">
-              The Composite Autonomic Symptom Score - Input the patient's selected answer number for each question to calculate the final scores.
-            </p>
-          </div>
-        </div>
-        {formData.map((item, i) => {
-          const numQuestionsDoneInSection = countQuestionsDone(item.questions);
-          const areAllQuestionsDone = numQuestionsDoneInSection === item.questions.length;
+      <div className="py-6">
+        <h1 className="text-2xl font-extrabold sm:text-3xl">
+          <span className="text-primary">COMPASS-31</span> Scoring
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+          The Composite Autonomic Symptom Score. Enter the patient's selected
+          answer number for each question; domain scores update as you type.
+        </p>
+      </div>
+
+      <div className="space-y-6">
+        {COMPASS_QUESTIONNAIRE.map((domain) => {
+          const doneInDomain = questionsDone(domain.questions, answers);
+          const complete = doneInDomain === domain.questions.length;
+          const score = domainScores[domain.key] ?? 0;
 
           return (
-            <>
-              <div key={item.id} className="box">
-                <h3>{item.domain}</h3>
-                <Divider />
-                <ol className="list-decimal marker:font-bold">
-                  {item.questions.map((question, j) => {
-                    const key = `d${item.id.toString()}q${question.id.toString()}`;
-                    const isOutOfRange = calcIsOutOfRange(question);
-                    let isDisabledDependent = false;
-                    if (question.dependent) {
-                      const dependentQuestion = item.questions.find(q => q.id === question.dependent);
-                      isDisabledDependent = dependentQuestion.value === dependentQuestion.dependentAnswer;
-                    }
-
-                    return (
-                      <li key={key} value={question.id}>
-                        <Typography style={{ fontSize: 'clamp(.8rem, 0.6rem + 1vw, 1rem)' }}>{question.questionText}</Typography>
-                        <TextField
-                          error={isOutOfRange}
-                          type='number'
-                          sx={{ marginTop: '5px' }}
-                          size="small"
-                          color="secondary"
-                          disabled={isDisabledDependent}
-                          label={isDisabledDependent ? 'N/A' : ''}
-                          onChange={(e) => {
-                            const newQuestions = [
-                              ...item.questions.slice(0, j),
-                              {
-                                ...question,
-                                value: parseInt(e.target.value),
-                              },
-                              ...item.questions.slice(j + 1),
-                            ];
-
-                            let newScore = 0;
-                            item.questions.forEach(q => {
-                              if (q.id === question.id) {
-                                newScore += q.pointsKey[parseInt(e.target.value) - 1] ?? 0
-                              } else {
-                                newScore += q.pointsKey[q.value - 1] ?? 0
-                              }
-                            });
-                            const newFormData = [
-                              ...formData.slice(0, i),
-                              {
-                                ...item,
-                                currentScore: newScore,
-                                questions: newQuestions,
-                              },
-                              ...formData.slice(i + 1),
-                            ];
-
-                            setFormData(newFormData);
-                            setOrthoScore(parseInt(e.target.value));
-                          }}
-                        />
-                        {isDisabledDependent &&
-                          (
-                            <Tooltip title={`This question is dependent on question: ${question.dependent}`}>
-                              <IconButton sx={{ position: 'relative', top: '8px' }} tabIndex={-1}>
-                                <InfoIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          )
-                        }
-                        {(question.type === 'checkmark' && !isDisabledDependent) &&
-                          (
-                            <Tooltip title={`Enter '1' if none are checked, '2' if one is checked, and '3' if both are checked.`}>
-                              <IconButton sx={{ position: 'relative', top: '8px' }} tabIndex={-1}>
-                                <InfoIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-
-                          )
-                        }
-                        {isOutOfRange &&
-                          (
-                            <Typography color="error">This number is not a valid patient answer.</Typography>
-                          )
-                        }
-                      </li>
-                    )
-                  })}
+            <Card key={domain.key}>
+              <CardHeader className="flex-row items-center justify-between space-y-0">
+                <CardTitle className="text-lg sm:text-xl">{domain.domain}</CardTitle>
+                <Badge variant={complete ? 'default' : 'outline'} className="tabular-nums">
+                  {score} / {domain.maxScore}
+                </Badge>
+              </CardHeader>
+              <Separator />
+              <CardContent>
+                <ol className="list-decimal divide-y pl-5 marker:font-semibold marker:text-primary">
+                  {domain.questions.map((q) => (
+                    <QuestionRow
+                      key={q.id}
+                      question={q}
+                      answer={answers[q.id] ?? null}
+                      onAnswer={(v) => setAnswer(q.id, v)}
+                    />
+                  ))}
                 </ol>
-                <div className={`score ${areAllQuestionsDone ? 'emphasized' : ''}`}>
-                  {item.currentScore}&nbsp;/&nbsp;{item.maxScore}
-                </div>
-              </div>
-            </>
-          )
+              </CardContent>
+            </Card>
+          );
         })}
-        <div className="button">
-          <Button
-            sx={{ width: '200px', height: '50px' }}
-            variant='contained'
-            color="secondary"
-            //disabled={numQuestionsDone !== numQuestions}
-            onClick={handleOpen}
-          >
-            Calculate Score
-          </Button>
-        </div>
       </div>
-      {open && (
-        <Dialog
-          fullScreen={fullScreen}
-          open={open}
-          onClose={handleClose}
-          aria-labelledby="responsive-dialog-title"
-          fullWidth
-          maxWidth="md"
-        >
-          <DialogTitle id="responsive-dialog-title">
-            <h2>{"Patient's COMPASS-31 Score"}</h2>
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText>
 
-              <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell align="left"><h4>Domain</h4></TableCell>
-                      <TableCell align="left"><h4>Sum&nbsp;Score</h4></TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {formData.map((row, j) => (
-                      <TableRow
-                        key={row.domain}
-                        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                      >
-                        <TableCell component="th" scope="row">
-                          {row.domain}
-                        </TableCell>
-                        <TableCell align="left">{row.currentScore}</TableCell>
-                      </TableRow>
-                    ))}
+      <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+        <Button variant="outline" onClick={handleReset}>
+          <RotateCcw className="mr-2 h-4 w-4" aria-hidden />
+          New Survey
+        </Button>
+        <Button size="lg" onClick={() => setShowScore(true)}>
+          Calculate Score
+        </Button>
+      </div>
 
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <br />
-              <div style={{ display: 'flex', justifyContent: 'right' }}><h2>Total Score: {totalScore} / {MAX_SCORE}</h2></div>
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => { setOpen(false) }} color="tertiary">
-              Edit Previous
+      <Dialog open={showScore} onOpenChange={setShowScore}>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Patient's COMPASS-31 Score</DialogTitle>
+          </DialogHeader>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Domain</TableHead>
+                <TableHead className="text-right">Score</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {COMPASS_QUESTIONNAIRE.map((d) => (
+                <TableRow key={d.key}>
+                  <TableCell>{d.domain}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {domainScores[d.key] ?? 0} / {d.maxScore}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          <div className="space-y-1 rounded-lg bg-muted p-4 text-right">
+            <p className="text-xl font-bold tabular-nums">
+              Total: {rawTotal} / {COMPASS31_RAW_MAX}
+            </p>
+            <p className="text-sm text-muted-foreground tabular-nums">
+              Weighted (validated scale): {weightedTotal} / {COMPASS31_WEIGHTED_MAX}
+            </p>
+            {severity && (
+              <p className="text-sm font-medium text-primary">{severity}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Severity label is display support only, not a diagnosis.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowScore(false)}>
+              Edit Answers
             </Button>
-            <Button onClick={handleClose} autoFocus color="secondary" variant="outlined">
-              Calculate Another Score
+            <Button variant="secondary" nativeButton={false} render={<Link to="/report" />}>
+              <FileText className="mr-2 h-4 w-4" aria-hidden />
+              Use in Report
             </Button>
-          </DialogActions>
-        </Dialog>
-      )}
-    </>
+            <Button onClick={handleReset}>New Survey</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 

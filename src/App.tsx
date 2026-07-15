@@ -1,32 +1,38 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
-import { theme } from '@/utils/theme';
 import Navbar from '@/components/layout/Navbar';
+import Home from '@/pages/Home';
 import CompassTool from '@/pages/CompassTool';
-import ClinicalPotsAssessment from '@/pages/ClinicalPotsAssessment';
-import './App.css';
+import NasaLeanTest from '@/pages/NasaLeanTest';
+import ActiveStandTest from '@/pages/ActiveStandTest';
+import ReportGenerator from '@/pages/ReportGenerator';
 
-import "@fontsource/ibm-plex-sans";
-import "@fontsource/plus-jakarta-sans";
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/600.css';
+import '@fontsource/plus-jakarta-sans/700.css';
+import '@fontsource/plus-jakarta-sans/800.css';
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <Router>
-        <div className="min-h-screen bg-background max-w-5xl mx-auto">
-          <Navbar />
-          <main className="pt-0">
-            <Routes>
-              <Route path="/" element={<CompassTool />} />
-              <Route path="/pots" element={<ClinicalPotsAssessment />} />
-            </Routes>
-            <Toaster richColors position="top-right" />
-          </main>
-        </div>
-      </Router>
-    </ThemeProvider>
+    <Router>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/compass-31" element={<CompassTool />} />
+            <Route path="/nasa-lean" element={<NasaLeanTest />} />
+            {/* Old bookmark from the previous site layout. */}
+            <Route path="/pots" element={<Navigate to="/nasa-lean" replace />} />
+            <Route path="/active-stand" element={<ActiveStandTest />} />
+            <Route path="/report" element={<ReportGenerator />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+        <Toaster richColors position="top-right" />
+      </div>
+    </Router>
   );
 }
 
