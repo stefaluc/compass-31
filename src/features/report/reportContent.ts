@@ -24,11 +24,7 @@ import {
 } from '@/lib/clinical/compass31';
 import { ais8Label, gad7Label, phq9Label } from '@/lib/clinical/severity';
 import {
-  delayedRecallFlag,
-  digitsBackwardFlag,
-  immediateRecallFlag,
   trailRatio,
-  trailRatioFlag,
 } from '@/lib/clinical/cognitive';
 import { mbessTotal, mbessTotalFlag } from '@/lib/clinical/balance';
 
@@ -254,26 +250,14 @@ export function buildCognitive(report: ReportDocument): CompareTable | null {
         {
           label: 'Immediate Recall',
           values: tps.map((tp) => fmt(get(tp)?.immediateRecall, 30)),
-          flags: tps.map((tp) => {
-            const v = get(tp)?.immediateRecall;
-            return v != null && immediateRecallFlag(v);
-          }),
         },
         {
           label: 'Delayed Recall',
           values: tps.map((tp) => fmt(get(tp)?.delayedRecall, 10)),
-          flags: tps.map((tp) => {
-            const v = get(tp)?.delayedRecall;
-            return v != null && delayedRecallFlag(v);
-          }),
         },
         {
           label: 'Digits Backward',
           values: tps.map((tp) => fmt(get(tp)?.digitsBackward, 4)),
-          flags: tps.map((tp) => {
-            const v = get(tp)?.digitsBackward;
-            return v != null && digitsBackwardFlag(v);
-          }),
         },
         {
           label: 'Trail Making A',
@@ -293,10 +277,6 @@ export function buildCognitive(report: ReportDocument): CompareTable | null {
             const v = get(tp);
             const r = trailRatio(v?.trailASeconds ?? null, v?.trailBSeconds ?? null);
             return r != null ? `${r}` : null;
-          }),
-          flags: tps.map((tp) => {
-            const v = get(tp);
-            return trailRatioFlag(trailRatio(v?.trailASeconds ?? null, v?.trailBSeconds ?? null));
           }),
         },
       ];

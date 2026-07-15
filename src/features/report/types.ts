@@ -389,7 +389,9 @@ export function createEmptyReport(reportType: ReportType, today: string): Report
     activeStand: {
       performed: null,
       values: {},
-      includePrior: { initial: false, last: false },
+      // Prior tables default to included — entered data should never silently
+      // disappear from the report; the checkboxes are an opt-out.
+      includePrior: { initial: true, last: true },
       interpretation: '',
     },
     cognitive: { values: {}, interpretation: '' },

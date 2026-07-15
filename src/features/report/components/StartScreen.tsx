@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ClipboardPlus, GitCompareArrows } from 'lucide-react';
 import { useReportStore } from '../store';
 
 /** RG-01: two large starting buttons select the workflow immediately. */
@@ -46,9 +46,7 @@ export function StartScreen() {
           onClick={() => startReport('initial')}
           className="group rounded-lg border bg-card p-6 text-left shadow-xs transition-all hover:border-primary/50 hover:shadow-md sm:p-8"
         >
-          <p className="mb-3 font-mono text-xs font-semibold tracking-wider text-primary">
-            INITIAL
-          </p>
+          <ClipboardPlus className="mb-4 h-10 w-10 text-primary" aria-hidden />
           <p className="font-heading text-lg font-bold sm:text-xl">
             Create Initial Evaluation Report
           </p>
@@ -61,9 +59,7 @@ export function StartScreen() {
           onClick={() => startReport('re-evaluation')}
           className="group rounded-lg border bg-card p-6 text-left shadow-xs transition-all hover:border-primary/50 hover:shadow-md sm:p-8"
         >
-          <p className="mb-3 font-mono text-xs font-semibold tracking-wider text-primary">
-            RE-EVAL
-          </p>
+          <GitCompareArrows className="mb-4 h-10 w-10 text-primary" aria-hidden />
           <p className="font-heading text-lg font-bold sm:text-xl">
             Create Re-evaluation Report
           </p>

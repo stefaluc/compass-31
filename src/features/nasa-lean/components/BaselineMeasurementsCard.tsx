@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Play } from 'lucide-react';
+import { Play, Activity } from 'lucide-react';
 import { BloodPressure } from '../types';
 
 interface BaselineMeasurementsCardProps {
@@ -26,11 +26,16 @@ export const BaselineMeasurementsCard: React.FC<BaselineMeasurementsCardProps> =
   return (
     <Card>
       <CardHeader className="">
-        <CardTitle className="text-xl font-bold">
-          Supine Baseline Measurements
-          <p className="text-muted-foreground mt-0.5 text-sm font-normal">
-            Take initial measurements while patient is lying flat and relaxed
-          </p>
+        <CardTitle className="flex items-center gap-3 text-xl">
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+            <Activity size={24} className="text-primary" />
+          </div>
+          <div>
+            <div>Supine Baseline Measurements</div>
+            <p className="text-muted-foreground text-sm font-normal">
+              Take initial measurements while patient is lying flat and relaxed
+            </p>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">

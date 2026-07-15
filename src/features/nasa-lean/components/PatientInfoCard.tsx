@@ -1,4 +1,5 @@
 import React from 'react';
+import { User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,11 +19,16 @@ export const PatientInfoCard: React.FC<PatientInfoCardProps> = ({
   return (
     <Card>
       <CardHeader className="">
-        <CardTitle className="text-xl font-bold">
-          Patient Information
-          <p className="text-muted-foreground mt-0.5 text-sm font-normal">
-            Enter patient details to begin the NASA Lean Test assessment
-          </p>
+        <CardTitle className="flex items-center gap-3 text-xl">
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+            <User size={24} className="text-primary" />
+          </div>
+          <div>
+            <div>Patient Information</div>
+            <p className="text-muted-foreground text-sm font-normal">
+              Enter patient details to begin the NASA Lean Test assessment
+            </p>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">

@@ -17,10 +17,7 @@ import {
   ThreePointNumberGrid,
   type MetricDef,
 } from '../fields';
-import {
-  trailRatio,
-  trailRatioFlag,
-} from '@/lib/clinical/cognitive';
+import { trailRatio } from '@/lib/clinical/cognitive';
 import { MBESS_TOTAL_MAX, mbessTotal, mbessTotalFlag } from '@/lib/clinical/balance';
 import { cn } from '@/lib/utils';
 
@@ -80,7 +77,6 @@ export function CognitiveSection({ report }: { report: ReportDocument }) {
           const v = section.values[tp];
           const ratio = trailRatio(v?.trailASeconds ?? null, v?.trailBSeconds ?? null);
           if (ratio == null) return null;
-          const flagged = trailRatioFlag(ratio);
           return (
             <div key={tp} className="rounded-lg bg-muted p-3 text-sm">
               {timePoints.length > 1 && (
@@ -88,19 +84,11 @@ export function CognitiveSection({ report }: { report: ReportDocument }) {
                   {TIME_POINT_LABELS[tp]}
                 </p>
               )}
-              <p className={cn('font-bold tabular-nums', flagged && 'text-destructive')}>
-                Trail B/A Ratio: {ratio}
-                {flagged && ' ▲'}
-              </p>
+              <p className="font-bold tabular-nums">Trail B/A Ratio: {ratio}</p>
             </div>
           );
         })}
       </div>
-      <p className="text-xs text-muted-foreground">
-        Red flags (Immediate Recall &lt;20, Delayed Recall &lt;6, Digits Backward &lt;3,
-        Trail B/A &gt;3) are clinic-defined display rules, not validated diagnostic
-        cutoffs.
-      </p>
     </SectionShell>
   );
 }

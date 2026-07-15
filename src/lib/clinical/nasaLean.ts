@@ -55,6 +55,28 @@ export const POTS_DELTA_THRESHOLD = 30;
 export const meetsPotsDeltaCriteria = (delta: number | null) =>
   delta != null && delta >= POTS_DELTA_THRESHOLD;
 
+/**
+ * Least-squares linear trend over the plotted heart-rate points. Returns a
+ * copy of the points with `trendValue` set (unchanged copy when fewer than
+ * two points). Used by the lean tool and the report preview so the dashed
+ * trend line is identical in both.
+ */
+export function applyTrendLine<T extends { time: number; heartRate: number }>(
+  points: T[],
+): (T & { trendValue?: number })[] {
+  if (points.length < 2) return points.map((p) => ({ ...p }));
+  const n = points.length;
+  const sumX = points.reduce((sum, d) => sum + d.time, 0);
+  const sumY = points.reduce((sum, d) => sum + d.heartRate, 0);
+  const sumXY = points.reduce((sum, d) => sum + d.time * d.heartRate, 0);
+  const sumXX = points.reduce((sum, d) => sum + d.time * d.time, 0);
+  const denominator = n * sumXX - sumX * sumX;
+  if (denominator === 0) return points.map((p) => ({ ...p }));
+  const slope = (n * sumXY - sumX * sumY) / denominator;
+  const intercept = (sumY - slope * sumX) / n;
+  return points.map((p) => ({ ...p, trendValue: slope * p.time + intercept }));
+}
+
 export const HR_TREND_OPTIONS = [
   'Stable',
   'Gradual increase',

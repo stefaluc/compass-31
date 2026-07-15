@@ -11,6 +11,7 @@ import {
   Copy,
   RotateCcw,
   CheckCircle,
+  AlertTriangle,
   Clock,
   Play,
   Pause,
@@ -30,7 +31,11 @@ import { MeasurementCRUD } from '@/features/nasa-lean/components/MeasurementCRUD
 import { PDFReportGenerator } from '@/features/nasa-lean/components/PDFReportGenerator';
 import { useNasaLeanStore } from '@/features/nasa-lean/store';
 import { makeMeasurement, type ChartDataPoint } from '@/features/nasa-lean/types';
-import { computeLeanStats, meetsPotsDeltaCriteria } from '@/lib/clinical/nasaLean';
+import {
+  applyTrendLine,
+  computeLeanStats,
+  meetsPotsDeltaCriteria,
+} from '@/lib/clinical/nasaLean';
 
 function formatTimer(totalSeconds: number): string {
   return `${Math.floor(totalSeconds / 60)}:${(totalSeconds % 60).toString().padStart(2, '0')}`;
@@ -102,13 +107,18 @@ function StandingPhase() {
     <Card>
       <CardContent>
         <div className="mb-6 flex flex-col gap-4 rounded-lg bg-muted/50 p-4 sm:flex-row sm:items-center">
-          <div>
-            <p className="text-xl font-bold sm:text-2xl">Standing Test Phase</p>
-            <p className="text-sm text-muted-foreground sm:text-base">
-              {isInitialHRRecording
-                ? 'Record initial standing heart rate to start timer'
-                : 'Record heart rate every 30 seconds'}
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <AlertTriangle className="h-6 w-6" aria-hidden />
+            </div>
+            <div>
+              <p className="text-xl font-bold sm:text-2xl">Standing Test Phase</p>
+              <p className="text-sm text-muted-foreground sm:text-base">
+                {isInitialHRRecording
+                  ? 'Record initial standing heart rate to start timer'
+                  : 'Record heart rate every 30 seconds'}
+              </p>
+            </div>
           </div>
           <div className="sm:ml-auto">
             <Badge variant={isInitialHRRecording ? 'outline' : isRunning ? 'default' : 'secondary'}>
@@ -459,21 +469,7 @@ function NasaLeanTest() {
     });
 
     const sorted = chartData.sort((a, b) => a.time - b.time);
-
-    if (showTrendLine && sorted.length >= 2) {
-      const n = sorted.length;
-      const sumX = sorted.reduce((sum, d) => sum + d.time, 0);
-      const sumY = sorted.reduce((sum, d) => sum + d.heartRate, 0);
-      const sumXY = sorted.reduce((sum, d) => sum + d.time * d.heartRate, 0);
-      const sumXX = sorted.reduce((sum, d) => sum + d.time * d.time, 0);
-      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-      const intercept = (sumY - slope * sumX) / n;
-      sorted.forEach((d) => {
-        d.trendValue = slope * d.time + intercept;
-      });
-    }
-
-    return sorted;
+    return showTrendLine ? applyTrendLine(sorted) : sorted;
   };
 
   const generateSummary = (): string => {
@@ -521,7 +517,7 @@ Generated: ${new Date().toLocaleString()}`;
   const exportChart = () => {
     const svgElement = document.querySelector('.recharts-wrapper svg');
     if (!svgElement) {
-      toast.error('Chart not available for export');
+      toast.error('Graph not available for download');
       return;
     }
     const canvas = document.createElement('canvas');
@@ -542,7 +538,7 @@ Generated: ${new Date().toLocaleString()}`;
       link.href = canvas.toDataURL();
       link.click();
       URL.revokeObjectURL(svgUrl);
-      toast.success('Chart exported successfully');
+      toast.success('Graph downloaded successfully');
     };
     img.src = svgUrl;
   };
@@ -888,7 +884,7 @@ Generated: ${new Date().toLocaleString()}`;
                       className="h-12 px-4 text-base sm:h-14"
                     >
                       <Download size={18} className="sm:mr-2" aria-hidden />
-                      <span className="hidden sm:block">Chart</span>
+                      <span className="hidden sm:block">Download Graph</span>
                     </Button>
                     <Button
                       onClick={copyToClipboard}

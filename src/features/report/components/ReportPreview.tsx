@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ import {
 import { ActiveStandTable } from '@/features/active-stand/ActiveStandTable';
 import { HeartRateChart } from '@/features/nasa-lean/components/HeartRateChart';
 import { captureChartWhenReady } from '@/features/nasa-lean/chartCapture';
+import { applyTrendLine } from '@/lib/clinical/nasaLean';
 import { cn } from '@/lib/utils';
 
 function PreviewTable({ table }: { table: CompareTable }) {
@@ -98,13 +99,16 @@ function PreviewSection({
   );
 }
 
-function chartDataForPreview(points: LeanChartPoint[]) {
-  return points.map((p) => ({ ...p }));
-}
-
 export function ReportPreview({ report }: { report: ReportDocument }) {
   const setStage = useReportStore((s) => s.setStage);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showTrendLine, setShowTrendLine] = useState(false);
+
+  const previewChartData = useMemo(() => {
+    const points: LeanChartPoint[] = report.nasaLean.chartData ?? [];
+    const sorted = [...points].sort((a, b) => a.time - b.time);
+    return showTrendLine ? applyTrendLine(sorted) : sorted.map((p) => ({ ...p }));
+  }, [report.nasaLean.chartData, showTrendLine]);
 
   const header = buildPatientHeader(report);
   const graded = buildGradedSymptoms(report);
@@ -144,7 +148,7 @@ export function ReportPreview({ report }: { report: ReportDocument }) {
     try {
       let chartImage: string | null = null;
       if (leanSection.chartData?.length) {
-        chartImage = await captureChartWhenReady('.report-lean-chart svg', {
+        chartImage = await captureChartWhenReady('.report-lean-chart .recharts-wrapper svg', {
           backgroundColor: 'white',
           scale: 2,
           quality: 0.95,
@@ -264,9 +268,9 @@ export function ReportPreview({ report }: { report: ReportDocument }) {
               {leanSection.chartData && leanSection.chartData.length > 0 && (
                 <div className="report-lean-chart">
                   <HeartRateChart
-                    chartData={chartDataForPreview(leanSection.chartData)}
-                    showTrendLine={false}
-                    onToggleTrendLine={() => {}}
+                    chartData={previewChartData}
+                    showTrendLine={showTrendLine}
+                    onToggleTrendLine={() => setShowTrendLine((v) => !v)}
                   />
                 </div>
               )}

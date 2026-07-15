@@ -1,5 +1,11 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  ClipboardList,
+  HeartPulse,
+  PersonStanding,
+  FileText,
+} from 'lucide-react';
 import { useCompassStore } from '@/features/compass31/store';
 import { useNasaLeanStore } from '@/features/nasa-lean/store';
 import { useActiveStandStore } from '@/features/active-stand/store';
@@ -13,28 +19,28 @@ import {
 const TOOLS = [
   {
     to: '/compass-31',
-    code: 'C-31',
+    icon: ClipboardList,
     title: 'COMPASS-31 Scoring',
     description:
       'Composite Autonomic Symptom Score across all six symptom domains.',
   },
   {
     to: '/nasa-lean',
-    code: 'LEAN',
+    icon: HeartPulse,
     title: 'NASA Lean Test',
     description:
       'Guided 10-minute lean test with timed heart-rate entries and a printable graph.',
   },
   {
     to: '/active-stand',
-    code: 'STND',
+    icon: PersonStanding,
     title: 'Active Stand Test',
     description:
       'Supine baseline and five standing minutes with automatic change-from-baseline.',
   },
   {
     to: '/report',
-    code: 'RPRT',
+    icon: FileText,
     title: 'Patient Evaluation Report',
     description: 'Assemble findings into one polished, chart-ready PDF.',
   },
@@ -73,7 +79,7 @@ function useDrafts(): Draft[] {
       key: 'report',
       to: '/report',
       title: `${type} report${report.patient.patientName ? ` — ${report.patient.patientName}` : ''}`,
-      meta: 'RPRT · in progress',
+      meta: 'Report · in progress',
       action: 'Resume',
     });
   }
@@ -87,7 +93,7 @@ function useDrafts(): Draft[] {
       key: 'compass',
       to: '/compass-31',
       title: `COMPASS-31 survey`,
-      meta: `C-31 · ${answered}/${TOTAL_QUESTIONS} answered`,
+      meta: `Survey · ${answered}/${TOTAL_QUESTIONS} answered`,
       action: answered === TOTAL_QUESTIONS ? 'Open' : 'Resume',
     });
   }
@@ -105,7 +111,7 @@ function useDrafts(): Draft[] {
       key: 'lean',
       to: '/nasa-lean',
       title: `NASA Lean Test${leanPatient ? ` — ${leanPatient}` : ''}`,
-      meta: `LEAN · ${phaseLabel}`,
+      meta: `Lean test · ${phaseLabel}`,
       action: leanPhase === 'complete' ? 'Open' : 'Resume',
     });
   }
@@ -124,7 +130,7 @@ function useDrafts(): Draft[] {
       key: 'stand',
       to: '/active-stand',
       title: `Active Stand Test${standPatient ? ` — ${standPatient}` : ''}`,
-      meta: 'STND · in progress',
+      meta: 'Stand test · in progress',
       action: 'Resume',
     });
   }
@@ -168,10 +174,10 @@ function Home() {
             <Link
               key={tool.to}
               to={tool.to}
-              className="group grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-4 border-b px-5 py-4 transition-colors last:border-b-0 hover:bg-muted/50"
+              className="group grid grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-4 border-b px-5 py-4 transition-colors last:border-b-0 hover:bg-muted/50"
             >
-              <span className="font-mono text-xs font-semibold tracking-wider text-primary">
-                {tool.code}
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <tool.icon className="h-5 w-5" aria-hidden />
               </span>
               <span>
                 <span className="block font-heading text-[15px] font-bold">

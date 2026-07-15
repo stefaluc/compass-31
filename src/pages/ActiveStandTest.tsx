@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RotateCcw, FileText } from 'lucide-react';
+import { PersonStanding, RotateCcw, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useActiveStandStore } from '@/features/active-stand/store';
 import { ActiveStandTable } from '@/features/active-stand/ActiveStandTable';
@@ -19,8 +19,11 @@ function ActiveStandTest() {
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
       <div className="overflow-hidden rounded-lg bg-card ring-1 ring-foreground/10">
         <div className="border-b-2 border-primary px-5 py-5 sm:px-7">
-          <h1 className="text-2xl font-extrabold sm:text-3xl">
-            <span className="text-primary">Active Stand</span> Test
+          <h1 className="flex items-center gap-2 text-2xl font-extrabold sm:text-3xl">
+            <PersonStanding className="h-7 w-7 text-primary" aria-hidden />
+            <span>
+              <span className="text-primary">Active Stand</span> Test
+            </span>
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground sm:text-base">
             Record a supine baseline (measured at minute 5 of rest), then blood pressure

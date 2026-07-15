@@ -80,7 +80,7 @@ export const COMPASS_QUESTIONNAIRE: CompassDomain[] = [
       {
         id: 7,
         text: 'Are these changes in your skin color:',
-        pointsKey: [3, 2, 1, 0],
+        pointsKey: [3, 2, 1, 0, 0, 0],
         dependsOn: 5,
       },
     ],
@@ -93,7 +93,7 @@ export const COMPASS_QUESTIONNAIRE: CompassDomain[] = [
       {
         id: 8,
         text: 'In the past 5 years, what changes, if any, have occurred in your general body sweating?',
-        pointsKey: [1, 0, 0, 1, 2, 0],
+        pointsKey: [1, 0, 0, 1, 2],
       },
       {
         id: 9,
