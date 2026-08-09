@@ -262,9 +262,7 @@ export function ReportPDF({
             {compass.totals.map((t) => (
               <Text key={t.timePoint} style={styles.bodyText}>
                 {isReEval ? `${TIME_POINT_LABELS[t.timePoint]}: ` : ''}
-                <Text style={styles.bold}>Total {t.raw} / 75</Text>
-                {`  (weighted ${t.weighted} / 100)`}
-                {t.severity ? `  —  ${t.severity}` : ''}
+                <Text style={styles.bold}>Total {t.weighted} / 100</Text>
               </Text>
             ))}
           </Section>

@@ -22,7 +22,6 @@ import {
   COMPASS31_RAW_MAX,
   COMPASS31_WEIGHTED_MAX,
   compass31RawTotal,
-  compass31SeverityLabel,
   compass31WeightedTotal,
 } from '@/lib/clinical/compass31';
 import {
@@ -175,14 +174,13 @@ export function CompassSection({ report }: { report: ReportDocument }) {
         }
       />
 
-      {/* CP-04 label + CV-01: raw /75 shown with weighted /100 alongside. */}
+      {/* CV-01: weighted /100 is the primary figure; raw /75 shown as entry support. */}
       <div className="grid gap-2 sm:grid-cols-3">
         {timePoints.map((tp) => {
           const v = section.values[tp];
           if (!v || !COMPASS31_DOMAINS.some((d) => v[d.key] != null)) return null;
           const raw = compass31RawTotal(v);
           const weighted = compass31WeightedTotal(v);
-          const severity = compass31SeverityLabel(raw);
           return (
             <div key={tp} className="rounded-lg bg-muted p-3 text-sm">
               {timePoints.length > 1 && (
@@ -191,12 +189,11 @@ export function CompassSection({ report }: { report: ReportDocument }) {
                 </p>
               )}
               <p className="font-bold tabular-nums">
-                Total: {raw} / {COMPASS31_RAW_MAX}
+                Total: {weighted} / {COMPASS31_WEIGHTED_MAX}
               </p>
               <p className="text-muted-foreground tabular-nums">
-                Weighted: {weighted} / {COMPASS31_WEIGHTED_MAX}
+                Raw: {raw} / {COMPASS31_RAW_MAX}
               </p>
-              {severity && <p className="font-medium text-primary">{severity}</p>}
             </div>
           );
         })}

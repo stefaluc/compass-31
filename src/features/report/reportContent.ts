@@ -18,8 +18,7 @@ import {
 } from './types';
 import {
   COMPASS31_DOMAINS,
-  compass31RawTotal,
-  compass31SeverityLabel,
+  compass31DomainWeighted,
   compass31WeightedTotal,
 } from '@/lib/clinical/compass31';
 import { ais8Label, gad7Label, phq9Label } from '@/lib/clinical/severity';
@@ -116,12 +115,14 @@ export interface CompassSummary {
   table: CompareTable;
   totals: {
     timePoint: TimePointKey;
-    raw: number;
     weighted: number;
-    severity: string | null;
   }[];
 }
 
+/**
+ * The summary sheet reports weighted domain scores and the weighted total
+ * /100 (the validated scale); raw scores stay on the scoring page only.
+ */
 export function buildCompass(report: ReportDocument): CompassSummary | null {
   const isPresent = (v: Record<string, number | null | undefined>) =>
     COMPASS31_DOMAINS.some((d) => v[d.key] != null);
@@ -131,21 +132,17 @@ export function buildCompass(report: ReportDocument): CompassSummary | null {
   const table = buildTable(report, report.compass.values, isPresent, (get) =>
     COMPASS31_DOMAINS.map((d) => ({
       label: d.domain,
-      values: tps.map((tp) => fmt(get(tp)?.[d.key] ?? null, d.maxScore)),
+      values: tps.map((tp) =>
+        fmt(compass31DomainWeighted(d, get(tp)?.[d.key]), d.weightedMax),
+      ),
     })),
   );
   if (!table) return null;
 
-  const totals = tps.map((tp) => {
-    const v = report.compass.values[tp]!;
-    const raw = compass31RawTotal(v);
-    return {
-      timePoint: tp,
-      raw,
-      weighted: compass31WeightedTotal(v),
-      severity: compass31SeverityLabel(raw),
-    };
-  });
+  const totals = tps.map((tp) => ({
+    timePoint: tp,
+    weighted: compass31WeightedTotal(report.compass.values[tp]!),
+  }));
 
   return { table, totals };
 }

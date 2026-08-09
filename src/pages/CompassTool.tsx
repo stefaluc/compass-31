@@ -34,10 +34,11 @@ import {
 } from '@/features/compass31/questions';
 import { useCompassStore } from '@/features/compass31/store';
 import {
+  COMPASS31_DOMAINS,
   COMPASS31_RAW_MAX,
   COMPASS31_WEIGHTED_MAX,
+  compass31DomainWeighted,
   compass31RawTotal,
-  compass31SeverityLabel,
   compass31WeightedTotal,
   type Compass31DomainScores,
 } from '@/lib/clinical/compass31';
@@ -113,7 +114,6 @@ function CompassTool() {
   );
   const rawTotal = compass31RawTotal(domainScores);
   const weightedTotal = compass31WeightedTotal(domainScores);
-  const severity = compass31SeverityLabel(rawTotal);
 
   const handleReset = () => {
     reset();
@@ -190,15 +190,19 @@ function CompassTool() {
             <TableHeader>
               <TableRow>
                 <TableHead>Domain</TableHead>
-                <TableHead className="text-right">Score</TableHead>
+                <TableHead className="text-right">Raw</TableHead>
+                <TableHead className="text-right">Weighted</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {COMPASS_QUESTIONNAIRE.map((d) => (
+              {COMPASS31_DOMAINS.map((d) => (
                 <TableRow key={d.key}>
                   <TableCell>{d.domain}</TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-right tabular-nums text-muted-foreground">
                     {domainScores[d.key] ?? 0} / {d.maxScore}
+                  </TableCell>
+                  <TableCell className="text-right font-medium tabular-nums">
+                    {compass31DomainWeighted(d, domainScores[d.key] ?? 0)} / {d.weightedMax}
                   </TableCell>
                 </TableRow>
               ))}
@@ -207,16 +211,10 @@ function CompassTool() {
 
           <div className="space-y-1 rounded-lg bg-muted p-4 text-right">
             <p className="text-xl font-bold tabular-nums">
-              Total: {rawTotal} / {COMPASS31_RAW_MAX}
+              Total: {weightedTotal} / {COMPASS31_WEIGHTED_MAX}
             </p>
             <p className="text-sm text-muted-foreground tabular-nums">
-              Weighted (validated scale): {weightedTotal} / {COMPASS31_WEIGHTED_MAX}
-            </p>
-            {severity && (
-              <p className="text-sm font-medium text-primary">{severity}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Severity label is display support only, not a diagnosis.
+              Raw: {rawTotal} / {COMPASS31_RAW_MAX}
             </p>
           </div>
 

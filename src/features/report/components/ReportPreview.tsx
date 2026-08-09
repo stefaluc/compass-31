@@ -229,11 +229,7 @@ export function ReportPreview({ report }: { report: ReportDocument }) {
                         {TIME_POINT_LABELS[t.timePoint]}
                       </p>
                     )}
-                    <p className="font-bold tabular-nums">Total: {t.raw} / 75</p>
-                    <p className="text-muted-foreground tabular-nums">
-                      Weighted: {t.weighted} / 100
-                    </p>
-                    {t.severity && <p className="font-medium text-primary">{t.severity}</p>}
+                    <p className="font-bold tabular-nums">Total: {t.weighted} / 100</p>
                   </div>
                 ))}
               </div>

@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   COMPASS31_DOMAINS,
+  compass31DomainWeighted,
   compass31RawTotal,
   compass31WeightedTotal,
-  compass31SeverityLabel,
 } from './compass31';
 import { phq9Label, gad7Label, ais8Label } from './severity';
 import {
@@ -37,15 +37,16 @@ describe('COMPASS-31', () => {
     expect(compass31RawTotal({})).toBe(0);
   });
 
-  it('severity labels follow CP-04 bands and leave >45 unlabeled (CV-03)', () => {
-    expect(compass31SeverityLabel(0)).toBe('Mild symptoms');
-    expect(compass31SeverityLabel(15)).toBe('Mild symptoms');
-    expect(compass31SeverityLabel(16)).toBe('Moderate symptoms');
-    expect(compass31SeverityLabel(30)).toBe('Moderate symptoms');
-    expect(compass31SeverityLabel(31)).toBe('Severe symptoms');
-    expect(compass31SeverityLabel(45)).toBe('Severe symptoms');
-    expect(compass31SeverityLabel(46)).toBeNull();
-    expect(compass31SeverityLabel(-1)).toBeNull();
+  it('per-domain weighted scores hit their weighted maxima at raw max', () => {
+    for (const d of COMPASS31_DOMAINS) {
+      expect(compass31DomainWeighted(d, d.maxScore)).toBeCloseTo(d.weightedMax, 0);
+    }
+    expect(COMPASS31_DOMAINS.reduce((s, d) => s + d.weightedMax, 0)).toBe(100);
+  });
+
+  it('per-domain weighted score is null when raw is missing', () => {
+    expect(compass31DomainWeighted(COMPASS31_DOMAINS[0], null)).toBeNull();
+    expect(compass31DomainWeighted(COMPASS31_DOMAINS[0], 5)).toBe(20);
   });
 });
 
