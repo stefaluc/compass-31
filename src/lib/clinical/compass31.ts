@@ -13,13 +13,18 @@ export interface Compass31DomainScore {
   maxScore: number;
 }
 
+/**
+ * Weighting factors per Sletten et al. 2012, Table 3. Stored as the exact
+ * fractions (weightedMax / maxScore) that the paper prints as truncated
+ * decimals (e.g. 5/6 → 0.83333333).
+ */
 export const COMPASS31_DOMAINS = [
-  { key: 'orthostaticIntolerance', domain: 'Orthostatic Intolerance', maxScore: 10, weight: 4, weightedMax: 40 },
-  { key: 'vasomotor', domain: 'Vasomotor', maxScore: 6, weight: 0.8333, weightedMax: 5 },
-  { key: 'secretomotor', domain: 'Secretomotor', maxScore: 7, weight: 2.1428571, weightedMax: 15 },
-  { key: 'gastrointestinal', domain: 'Gastrointestinal', maxScore: 28, weight: 0.8928571, weightedMax: 25 },
-  { key: 'bladder', domain: 'Bladder', maxScore: 9, weight: 1.111, weightedMax: 10 },
-  { key: 'pupillomotor', domain: 'Pupillomotor', maxScore: 15, weight: 0.333, weightedMax: 5 },
+  { key: 'orthostaticIntolerance', domain: 'Orthostatic Intolerance', maxScore: 10, weight: 40 / 10, weightedMax: 40 },
+  { key: 'vasomotor', domain: 'Vasomotor', maxScore: 6, weight: 5 / 6, weightedMax: 5 },
+  { key: 'secretomotor', domain: 'Secretomotor', maxScore: 7, weight: 15 / 7, weightedMax: 15 },
+  { key: 'gastrointestinal', domain: 'Gastrointestinal', maxScore: 28, weight: 25 / 28, weightedMax: 25 },
+  { key: 'bladder', domain: 'Bladder', maxScore: 9, weight: 10 / 9, weightedMax: 10 },
+  { key: 'pupillomotor', domain: 'Pupillomotor', maxScore: 15, weight: 5 / 15, weightedMax: 5 },
 ] as const;
 
 export type Compass31DomainKey = (typeof COMPASS31_DOMAINS)[number]['key'];

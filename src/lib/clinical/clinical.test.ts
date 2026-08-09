@@ -5,6 +5,7 @@ import {
   compass31RawTotal,
   compass31WeightedTotal,
 } from './compass31';
+import { COMPASS_QUESTIONNAIRE } from '@/features/compass31/questions';
 import { phq9Label, gad7Label, ais8Label } from './severity';
 import {
   changeFromBaseline,
@@ -22,9 +23,44 @@ import {
 import { mbessTotal, mbessTotalFlag } from './balance';
 import { computeLeanStats, meetsPotsDeltaCriteria } from './nasaLean';
 
+/** Sletten et al. 2012, Table 3: [questions, max raw, weighting factor, max weighted]. */
+const TABLE_3: Record<string, [number, number, number, number]> = {
+  orthostaticIntolerance: [4, 10, 4.0, 40],
+  vasomotor: [3, 6, 0.83333333, 5],
+  secretomotor: [4, 7, 2.1428571, 15],
+  gastrointestinal: [12, 28, 0.8928571, 25],
+  bladder: [3, 9, 1.1111111, 10],
+  pupillomotor: [5, 15, 0.3333333, 5],
+};
+
 describe('COMPASS-31', () => {
   it('domain raw maxima total 75', () => {
     expect(COMPASS31_DOMAINS.reduce((s, d) => s + d.maxScore, 0)).toBe(75);
+  });
+
+  it('matches Sletten et al. 2012 Table 3 exactly', () => {
+    for (const d of COMPASS31_DOMAINS) {
+      const [, maxRaw, weight, maxWeighted] = TABLE_3[d.key];
+      expect(d.maxScore).toBe(maxRaw);
+      expect(d.weight).toBeCloseTo(weight, 7);
+      expect(d.weightedMax).toBe(maxWeighted);
+      // stored as exact fractions, so raw max × weight is exactly the weighted max
+      expect(d.maxScore * d.weight).toBeCloseTo(maxWeighted, 12);
+    }
+  });
+
+  it('questionnaire structure matches Table 3 question counts and raw maxima', () => {
+    for (const domain of COMPASS_QUESTIONNAIRE) {
+      const [questionCount, maxRaw] = TABLE_3[domain.key];
+      expect(domain.questions.length).toBe(questionCount);
+      const maxFromPoints = domain.questions.reduce(
+        (s, q) => s + Math.max(...q.pointsKey),
+        0,
+      );
+      expect(maxFromPoints).toBe(maxRaw);
+      expect(domain.maxScore).toBe(maxRaw);
+    }
+    expect(COMPASS_QUESTIONNAIRE.flatMap((d) => d.questions).length).toBe(31);
   });
 
   it('weighted maxima total 100', () => {
