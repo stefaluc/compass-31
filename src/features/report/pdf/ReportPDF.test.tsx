@@ -82,7 +82,7 @@ describe('ReportPDF', () => {
       mbessTandem: 7,
       tandemGaitDistance: '10',
       tandemGaitQuality: 'Slow and mildly unsteady',
-      tandemGaitOther: '',
+      tandemGaitNotes: 'Veers left on turns',
       fukudaRotationDirection: 'Left',
       fukudaDegrees: '45',
       fukudaDisplacements: [
@@ -96,12 +96,15 @@ describe('ReportPDF', () => {
       interpretation: 'Consistent with upper cervical dysfunction.',
     };
 
-    const rows = Object.fromEntries(
-      buildBalance(report)!.rows.map((r) => [r.label, r]),
-    );
+    const balance = buildBalance(report)!;
+    const rows = Object.fromEntries(balance.rows.map((r) => [r.label, r]));
     expect(rows['mBESS Total Errors'].values).toEqual(['11 / 30']);
-    expect(rows['mBESS Total Errors'].flags).toEqual([true]);
-    expect(rows['Tandem Gait'].values).toEqual(['Slow and mildly unsteady, 10 ft']);
+    // No red flag on mBESS; the table says the numbers are errors instead.
+    expect(rows['mBESS Total Errors'].flags).toBeUndefined();
+    expect(balance.note).toMatch(/number of errors/);
+    expect(rows['Tandem Gait'].values).toEqual([
+      'Slow and mildly unsteady, 10 ft. Veers left on turns',
+    ]);
     expect(rows['Fukuda Displacement'].values).toEqual(['Forward 3 ft, Right 2 ft']);
 
     const compass = buildCompass(report)!;
@@ -147,6 +150,44 @@ describe('ReportPDF', () => {
       'Last Re-evaluation Date',
     ]);
     expect(labels({ ...report, reportType: 'initial' })).toEqual(['Evaluation Date']);
+  });
+
+  it('prints tandem gait notes with any choice and explains mBESS only when scored', () => {
+    const report = createEmptyReport('initial', '2026-11-18');
+    const gait = (v: Record<string, string>) => {
+      report.balance.values.current = v;
+      return buildBalance(report)!;
+    };
+    expect(gait({ tandemGaitNotes: 'Needed one hand on the wall' }).rows[0].values).toEqual([
+      'Needed one hand on the wall',
+    ]);
+    expect(
+      gait({
+        tandemGaitQuality: 'Other',
+        tandemGaitNotes: 'Wide-based',
+        tandemGaitDistance: '10',
+      }).rows[0].values,
+    ).toEqual(['Wide-based, 10 ft']);
+    expect(gait({ tandemGaitQuality: 'Quick and steady' }).rows[0].values).toEqual([
+      'Quick and steady',
+    ]);
+    // Tandem gait alone: no mBESS on the page, so no mBESS explanation.
+    expect(gait({ tandemGaitQuality: 'Quick and steady' }).note).toBeUndefined();
+  });
+
+  it('carries the old tandem gait "Other" description into the notes box', () => {
+    const old = JSON.parse(JSON.stringify(createEmptyReport('initial', '2026-11-18')));
+    old.balance.values.current = {
+      mbessDoubleLeg: 2,
+      tandemGaitQuality: 'Other',
+      tandemGaitOther: 'Wide-based',
+    };
+    const report = migrateReport(old, 2)!;
+    expect(report.balance.values.current).toEqual({
+      mbessDoubleLeg: 2, // already errors at v2: not converted again
+      tandemGaitQuality: 'Other',
+      tandemGaitNotes: 'Wide-based',
+    });
   });
 
   it('migrates a draft saved before the weighted / errors / multi-direction changes', () => {

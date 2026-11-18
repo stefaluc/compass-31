@@ -178,7 +178,7 @@ export interface BalanceValues {
   mbessTandem: number | null;
   tandemGaitDistance: string; // feet walked
   tandemGaitQuality: string; // TANDEM_GAIT_OPTIONS
-  tandemGaitOther: string; // shown when quality is "Other"
+  tandemGaitNotes: string; // free text, always shown; the description when quality is "Other"
   fukudaRotationDirection: string;
   fukudaDegrees: string;
   /** A patient can drift in more than one direction (3 ft forward and 2 ft right). */
@@ -458,7 +458,7 @@ export function activeTimePoints(reportType: ReportType): TimePointKey[] {
 /* -------------------------------- Migration --------------------------------- */
 
 /** Bump when the persisted document shape changes; see `migrateReport`. */
-export const REPORT_SCHEMA_VERSION = 2;
+export const REPORT_SCHEMA_VERSION = 3;
 
 /**
  * Upgrades a report saved on this device by an older version of the app so an
@@ -469,6 +469,10 @@ export const REPORT_SCHEMA_VERSION = 2;
  *  - mBESS stances were points earned out of 10; they are now error counts.
  *  - Fukuda displacement was a single direction; it is now a list.
  *  - New fields: case history, prior visit dates, tandem gait, musculoskeletal.
+ *
+ * v2 → v3:
+ *  - The tandem gait "Other" description became a notes box shown for every
+ *    choice (`tandemGaitOther` → `tandemGaitNotes`).
  */
 export function migrateReport(
   saved: unknown,
@@ -483,8 +487,12 @@ export function migrateReport(
     ...old,
     patient: { ...empty.patient, ...old.patient },
   };
-  if (fromVersion >= REPORT_SCHEMA_VERSION) return report;
+  if (fromVersion < 2) migrateV1ToV2(report);
+  if (fromVersion < 3) migrateV2ToV3(report);
+  return report;
+}
 
+function migrateV1ToV2(report: ReportDocument): void {
   const compassValues: ThreePoint<CompassDomainValues> = {};
   for (const tp of TIME_POINTS) {
     const raw = report.compass?.values?.[tp];
@@ -528,6 +536,20 @@ export function migrateReport(
     balanceValues[tp] = next;
   }
   report.balance = { ...report.balance, values: balanceValues };
+}
 
-  return report;
+function migrateV2ToV3(report: ReportDocument): void {
+  const balanceValues: ThreePoint<Partial<BalanceValues>> = {};
+  for (const tp of TIME_POINTS) {
+    const prev = report.balance?.values?.[tp] as
+      | (Partial<BalanceValues> & { tandemGaitOther?: string })
+      | null
+      | undefined;
+    if (!prev) continue;
+    const { tandemGaitOther, ...rest } = prev;
+    balanceValues[tp] = tandemGaitOther
+      ? { ...rest, tandemGaitNotes: tandemGaitOther }
+      : rest;
+  }
+  report.balance = { ...report.balance, values: balanceValues };
 }

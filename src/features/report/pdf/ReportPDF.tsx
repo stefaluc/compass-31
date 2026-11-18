@@ -63,6 +63,7 @@ const styles = StyleSheet.create({
   tdLabel: { flex: 2.2, fontFamily: 'Helvetica-Bold' },
   td: { flex: 1, textAlign: 'center' },
   tdFlag: { flex: 1, textAlign: 'center', color: RED, fontFamily: 'Helvetica-Bold' },
+  tableNote: { fontSize: 7.5, color: '#666666', marginTop: 3 },
   interpretation: {
     backgroundColor: '#F6F2F3',
     padding: 6,
@@ -118,6 +119,7 @@ function PdfTable({ table }: { table: CompareTable }) {
           ))}
         </View>
       ))}
+      {table.note && <Text style={styles.tableNote}>{table.note}</Text>}
     </View>
   );
 }

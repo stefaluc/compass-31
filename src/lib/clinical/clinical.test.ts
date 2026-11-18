@@ -23,7 +23,7 @@ import {
   trailRatio,
   trailRatioFlag,
 } from './cognitive';
-import { formatFeet, mbessTotal, mbessTotalFlag } from './balance';
+import { formatFeet, mbessTotal } from './balance';
 import { computeLeanStats, meetsPotsDeltaCriteria } from './nasaLean';
 
 /** Sletten et al. 2012, Table 3: [questions, max raw, weighting factor, max weighted]. */
@@ -249,12 +249,6 @@ describe('mBESS (CV-02: error counts, lower is better)', () => {
     expect(mbessTotal(0, 5, 3)).toBe(8);
     expect(mbessTotal(null, null, null)).toBeNull();
     expect(mbessTotal(2, null, null)).toBe(2);
-  });
-  it('red above 10 errors', () => {
-    expect(mbessTotalFlag(11)).toBe(true);
-    expect(mbessTotalFlag(10)).toBe(false);
-    expect(mbessTotalFlag(0)).toBe(false);
-    expect(mbessTotalFlag(null)).toBe(false);
   });
 });
 

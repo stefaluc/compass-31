@@ -22,7 +22,7 @@ import { ais8Label, gad7Label, phq9Label } from '@/lib/clinical/severity';
 import {
   trailRatio,
 } from '@/lib/clinical/cognitive';
-import { formatFeet, mbessTotal, mbessTotalFlag } from '@/lib/clinical/balance';
+import { MBESS_REPORT_NOTE, formatFeet, mbessTotal } from '@/lib/clinical/balance';
 
 export const has = (v: unknown): boolean => {
   if (v == null) return false;
@@ -43,6 +43,8 @@ export interface CompareTable {
   columns: string[]; // column headers (time point labels), 1 for initial reports
   timePoints: TimePointKey[];
   rows: CompareRow[];
+  /** Small explanatory line printed under the table. */
+  note?: string;
 }
 
 function presentTimePoints<T>(
@@ -288,12 +290,22 @@ export function balanceHasContent(v: Partial<BalanceValues> | null | undefined):
   });
 }
 
-/** "Slow and mildly unsteady, 10 ft" — or the free-text description for Other. */
+/**
+ * "Slow and mildly unsteady, 10 ft. Veers left on turns." — the dropdown choice,
+ * the distance, then the provider's notes. With "Other" the notes are the
+ * description, so they take the place of the choice.
+ */
 function tandemGaitSummary(v: Partial<BalanceValues> | null): string | null {
   if (!v) return null;
-  const quality = v.tandemGaitQuality === 'Other' ? v.tandemGaitOther : v.tandemGaitQuality;
-  const parts = [fmtText(quality), formatFeet(v.tandemGaitDistance)].filter(Boolean);
-  return parts.length ? parts.join(', ') : null;
+  const notes = fmtText(v.tandemGaitNotes?.trim());
+  const feet = formatFeet(v.tandemGaitDistance);
+  if (v.tandemGaitQuality === 'Other') {
+    const parts = [notes, feet].filter(Boolean);
+    return parts.length ? parts.join(', ') : null;
+  }
+  const head = [fmtText(v.tandemGaitQuality), feet].filter(Boolean).join(', ');
+  if (head && notes) return `${head}. ${notes}`;
+  return head || notes;
 }
 
 /** "Forward 3 ft, Right 2 ft" — every direction the patient drifted. */
@@ -305,6 +317,16 @@ function fukudaDisplacementSummary(v: Partial<BalanceValues> | null): string | n
 }
 
 export function buildBalance(report: ReportDocument): CompareTable | null {
+  const table = buildBalanceTable(report);
+  if (!table) return null;
+  // Only explain mBESS when an mBESS score is actually on the page.
+  const hasMbess = table.rows.some((r) => r.label === MBESS_TOTAL_LABEL);
+  return hasMbess ? { ...table, note: MBESS_REPORT_NOTE } : table;
+}
+
+const MBESS_TOTAL_LABEL = 'mBESS Total Errors';
+
+function buildBalanceTable(report: ReportDocument): CompareTable | null {
   return buildTable(report, report.balance.values, balanceHasContent, (get) => {
     const tps = presentTimePoints(report, report.balance.values, balanceHasContent);
     const total = (tp: TimePointKey) => {
@@ -329,9 +351,8 @@ export function buildBalance(report: ReportDocument): CompareTable | null {
         values: tps.map((tp) => fmt(get(tp)?.mbessTandem, 10)),
       },
       {
-        label: 'mBESS Total Errors',
+        label: MBESS_TOTAL_LABEL,
         values: tps.map((tp) => fmt(total(tp), 30)),
-        flags: tps.map((tp) => mbessTotalFlag(total(tp))),
       },
       { label: 'Tandem Gait', values: tps.map((tp) => tandemGaitSummary(get(tp))) },
       {

@@ -68,6 +68,9 @@ function PreviewTable({ table }: { table: CompareTable }) {
           ))}
         </tbody>
       </table>
+      {table.note && (
+        <p className="mt-1.5 text-xs text-muted-foreground">{table.note}</p>
+      )}
     </div>
   );
 }

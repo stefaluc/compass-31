@@ -26,10 +26,8 @@ import {
   MBESS_TOTAL_MAX,
   TANDEM_GAIT_OPTIONS,
   mbessTotal,
-  mbessTotalFlag,
 } from '@/lib/clinical/balance';
 import { balanceHasContent } from '../../reportContent';
-import { cn } from '@/lib/utils';
 
 function setThreePointValue<V extends object>(
   values: ThreePoint<V>,
@@ -210,7 +208,6 @@ export function BalanceSection({ report }: { report: ReportDocument }) {
             v?.mbessTandem ?? null,
           );
           if (total == null) return null;
-          const flagged = mbessTotalFlag(total);
           return (
             <div key={tp} className="rounded-lg bg-muted p-3 text-sm">
               {timePoints.length > 1 && (
@@ -218,9 +215,8 @@ export function BalanceSection({ report }: { report: ReportDocument }) {
                   {TIME_POINT_LABELS[tp]}
                 </p>
               )}
-              <p className={cn('font-bold tabular-nums', flagged && 'text-destructive')}>
+              <p className="font-bold tabular-nums">
                 mBESS Total Errors: {total} / {MBESS_TOTAL_MAX}
-                {flagged && ' ▲'}
               </p>
             </div>
           );
@@ -228,7 +224,7 @@ export function BalanceSection({ report }: { report: ReportDocument }) {
       </div>
       <p className="text-xs text-muted-foreground">
         Enter the number of errors in each stance (maximum 10). The total is errors
-        out of 30 — lower is better. Totals above 10 errors are flagged.
+        out of 30 — lower is better. The report states that these are error counts.
       </p>
 
       {timePoints.map((tp) => {
@@ -254,13 +250,16 @@ export function BalanceSection({ report }: { report: ReportDocument }) {
                 options={TANDEM_GAIT_OPTIONS}
               />
             </div>
-            {v.tandemGaitQuality === 'Other' && (
-              <TextField
-                label="Describe tandem gait"
-                value={v.tandemGaitOther ?? ''}
-                onChange={(s) => setField(tp, 'tandemGaitOther', s)}
-              />
-            )}
+            <TextField
+              label="Tandem Gait Notes"
+              value={v.tandemGaitNotes ?? ''}
+              onChange={(s) => setField(tp, 'tandemGaitNotes', s)}
+              placeholder={
+                v.tandemGaitQuality === 'Other'
+                  ? 'Describe the gait'
+                  : 'Optional — anything to add about the gait'
+              }
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <SelectField
                 label="Fukuda Rotation Direction"
