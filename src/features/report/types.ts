@@ -8,7 +8,11 @@
  * Re-evaluation, Current. Initial reports only populate `current`.
  */
 
-import type { Compass31DomainKey } from '@/lib/clinical/compass31';
+import {
+  COMPASS31_DOMAINS,
+  compass31DomainWeighted,
+  type Compass31DomainKey,
+} from '@/lib/clinical/compass31';
 
 export type ReportType = 'initial' | 're-evaluation';
 
@@ -46,6 +50,11 @@ export interface PatientInfo {
   age: string;
   mrn: string;
   providerName: string;
+  /** Short narrative shown at the top of the report, under the visit details. */
+  caseHistory: string;
+  /** Re-evaluation only: dates of the visits being compared (YYYY-MM-DD). */
+  initialEvalDate: string;
+  lastReEvalDate: string;
   bpSystolic: number | null;
   bpDiastolic: number | null;
   heartRate: number | null;
@@ -65,6 +74,7 @@ export interface GradedSymptomValues {
 
 /* ------------------------------ §7.4 COMPASS-31 ---------------------------- */
 
+/** WEIGHTED domain scores (e.g. orthostatic intolerance out of 40), never raw. */
 export type CompassDomainValues = Partial<Record<Compass31DomainKey, number | null>>;
 
 /* --------------------- §7.5 Mental Health and Sleep ------------------------ */
@@ -155,14 +165,24 @@ export interface CognitiveValues {
 export const FUKUDA_ROTATION_OPTIONS = ['Left', 'Right', 'None'] as const;
 export const FUKUDA_DISPLACEMENT_OPTIONS = ['Forward', 'Backward', 'Left', 'Right', 'None'] as const;
 
+/** One leg of a Fukuda displacement, e.g. { direction: 'Forward', distance: '3 ft' }. */
+export interface FukudaDisplacement {
+  direction: string;
+  distance: string;
+}
+
 export interface BalanceValues {
-  mbessDoubleLeg: number | null; // /10
-  mbessSingleLeg: number | null; // /10
-  mbessTandem: number | null; // /10
+  /** mBESS: number of ERRORS per stance (0–10); lower is better. */
+  mbessDoubleLeg: number | null;
+  mbessSingleLeg: number | null;
+  mbessTandem: number | null;
+  tandemGaitDistance: string; // feet walked
+  tandemGaitQuality: string; // TANDEM_GAIT_OPTIONS
+  tandemGaitOther: string; // shown when quality is "Other"
   fukudaRotationDirection: string;
   fukudaDegrees: string;
-  fukudaDisplacementDirection: string;
-  fukudaDisplacementDistance: string;
+  /** A patient can drift in more than one direction (3 ft forward and 2 ft right). */
+  fukudaDisplacements: FukudaDisplacement[];
   symptoms: string;
 }
 
@@ -238,6 +258,13 @@ export interface CranialNerveSection {
   includeNormalInPdf: boolean;
 }
 
+/* ------------------------ Musculoskeletal Findings -------------------------- */
+
+export interface MusculoskeletalSection {
+  findings: string;
+  interpretation: string;
+}
+
 /* ---------------------------- §7.13 Special Tests --------------------------- */
 
 export interface SpecialTest {
@@ -306,6 +333,7 @@ export interface ReportDocument {
   ocular: SectionWithInterpretation<OcularValues>;
   beighton: { score: number | null; interpretation: string }; // initial only
   cranialNerves: CranialNerveSection;
+  musculoskeletal: MusculoskeletalSection;
   specialTests: SpecialTest[];
   generalNotes: string;
   recommendations: Recommendations;
@@ -366,6 +394,9 @@ export function createEmptyReport(reportType: ReportType, today: string): Report
       age: '',
       mrn: '',
       providerName: '',
+      caseHistory: '',
+      initialEvalDate: '',
+      lastReEvalDate: '',
       bpSystolic: null,
       bpDiastolic: null,
       heartRate: null,
@@ -405,6 +436,7 @@ export function createEmptyReport(reportType: ReportType, today: string): Report
       interpretation: '',
       includeNormalInPdf: false,
     },
+    musculoskeletal: { findings: '', interpretation: '' },
     specialTests: [],
     generalNotes: '',
     recommendations: {
@@ -421,4 +453,81 @@ export function createEmptyReport(reportType: ReportType, today: string): Report
 /** Time points that apply to a report type (initial reports only use `current`). */
 export function activeTimePoints(reportType: ReportType): TimePointKey[] {
   return reportType === 'initial' ? ['current'] : ['initial', 'last', 'current'];
+}
+
+/* -------------------------------- Migration --------------------------------- */
+
+/** Bump when the persisted document shape changes; see `migrateReport`. */
+export const REPORT_SCHEMA_VERSION = 2;
+
+/**
+ * Upgrades a report saved on this device by an older version of the app so an
+ * in-progress draft survives an update.
+ *
+ * v1 → v2:
+ *  - COMPASS-31 domain values were raw points; they are now weighted scores.
+ *  - mBESS stances were points earned out of 10; they are now error counts.
+ *  - Fukuda displacement was a single direction; it is now a list.
+ *  - New fields: case history, prior visit dates, tandem gait, musculoskeletal.
+ */
+export function migrateReport(
+  saved: unknown,
+  fromVersion: number,
+): ReportDocument | null {
+  if (!saved || typeof saved !== 'object') return null;
+  const old = saved as ReportDocument;
+  const empty = createEmptyReport(old.reportType ?? 'initial', '');
+  // Missing top-level sections and patient fields fall back to empty defaults.
+  const report: ReportDocument = {
+    ...empty,
+    ...old,
+    patient: { ...empty.patient, ...old.patient },
+  };
+  if (fromVersion >= REPORT_SCHEMA_VERSION) return report;
+
+  const compassValues: ThreePoint<CompassDomainValues> = {};
+  for (const tp of TIME_POINTS) {
+    const raw = report.compass?.values?.[tp];
+    if (!raw) continue;
+    const weighted: CompassDomainValues = {};
+    for (const d of COMPASS31_DOMAINS) {
+      const w = compass31DomainWeighted(d, raw[d.key]);
+      if (w != null) weighted[d.key] = w;
+    }
+    compassValues[tp] = weighted;
+  }
+  report.compass = { ...report.compass, values: compassValues };
+
+  const balanceValues: ThreePoint<Partial<BalanceValues>> = {};
+  for (const tp of TIME_POINTS) {
+    const prev = report.balance?.values?.[tp] as
+      | (Partial<BalanceValues> & {
+          fukudaDisplacementDirection?: string;
+          fukudaDisplacementDistance?: string;
+        })
+      | null
+      | undefined;
+    if (!prev) continue;
+    const { fukudaDisplacementDirection, fukudaDisplacementDistance, ...rest } = prev;
+    const toErrors = (points: number | null | undefined) =>
+      points == null ? null : Math.min(10, Math.max(0, 10 - points));
+    const next: Partial<BalanceValues> = {
+      ...rest,
+      mbessDoubleLeg: toErrors(prev.mbessDoubleLeg),
+      mbessSingleLeg: toErrors(prev.mbessSingleLeg),
+      mbessTandem: toErrors(prev.mbessTandem),
+    };
+    if (fukudaDisplacementDirection || fukudaDisplacementDistance) {
+      next.fukudaDisplacements = [
+        {
+          direction: fukudaDisplacementDirection ?? '',
+          distance: fukudaDisplacementDistance ?? '',
+        },
+      ];
+    }
+    balanceValues[tp] = next;
+  }
+  report.balance = { ...report.balance, values: balanceValues };
+
+  return report;
 }

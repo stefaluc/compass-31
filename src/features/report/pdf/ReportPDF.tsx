@@ -249,6 +249,12 @@ export function ReportPDF({
             </View>
           ))}
         </View>
+        {has(report.patient.caseHistory) && (
+          <View style={{ marginTop: 6 }}>
+            <Text style={styles.subLabel}>Brief Case History</Text>
+            <Text>{report.patient.caseHistory}</Text>
+          </View>
+        )}
 
         {graded && (
           <Section title="Graded Symptom Survey" interpretation={report.gradedSymptoms.interpretation}>
@@ -374,6 +380,18 @@ export function ReportPDF({
                 )}
                 <Interpretation text={report.cranialNerves.interpretation} />
               </>
+            )}
+          </Section>
+        )}
+
+        {(has(report.musculoskeletal.findings) ||
+          has(report.musculoskeletal.interpretation)) && (
+          <Section
+            title="Musculoskeletal Findings"
+            interpretation={report.musculoskeletal.interpretation}
+          >
+            {has(report.musculoskeletal.findings) && (
+              <Text style={styles.bodyText}>{report.musculoskeletal.findings}</Text>
             )}
           </Section>
         )}

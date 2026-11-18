@@ -207,6 +207,12 @@ export function ReportPreview({ report }: { report: ReportDocument }) {
                 </div>
               ))}
             </dl>
+            {has(report.patient.caseHistory) && (
+              <div className="mt-4 text-sm">
+                <p className="mb-1 font-semibold">Brief Case History</p>
+                <p className="whitespace-pre-wrap">{report.patient.caseHistory}</p>
+              </div>
+            )}
           </div>
 
           {graded && (
@@ -377,6 +383,20 @@ export function ReportPreview({ report }: { report: ReportDocument }) {
                     </div>
                   )}
                 </>
+              )}
+            </PreviewSection>
+          )}
+
+          {(has(report.musculoskeletal.findings) ||
+            has(report.musculoskeletal.interpretation)) && (
+            <PreviewSection
+              title="Musculoskeletal Findings"
+              interpretation={report.musculoskeletal.interpretation}
+            >
+              {has(report.musculoskeletal.findings) && (
+                <p className="whitespace-pre-wrap text-sm">
+                  {report.musculoskeletal.findings}
+                </p>
               )}
             </PreviewSection>
           )}

@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
   createEmptyReport,
+  migrateReport,
+  REPORT_SCHEMA_VERSION,
   type ReportDocument,
   type ReportType,
 } from './types';
@@ -54,7 +56,13 @@ export const useReportStore = create<ReportState>()(
     }),
     {
       name: 'aep-report',
-      version: 1,
+      version: REPORT_SCHEMA_VERSION,
+      // Carry an in-progress draft across app updates that change its shape.
+      migrate: (persisted, version) => {
+        const state = persisted as { report?: unknown; stage?: ReportStage } | null;
+        const report = migrateReport(state?.report, version);
+        return { report, stage: report ? (state?.stage ?? 'form') : 'start' };
+      },
     },
   ),
 );

@@ -10,22 +10,19 @@ import {
   activeTimePoints,
   TIME_POINT_LABELS,
   type ActiveStandValues,
+  type BalanceValues,
   type BrockStringPosition,
   type OcularValues,
   type ReportDocument,
   type ThreePoint,
   type TimePointKey,
 } from './types';
-import {
-  COMPASS31_DOMAINS,
-  compass31DomainWeighted,
-  compass31WeightedTotal,
-} from '@/lib/clinical/compass31';
+import { COMPASS31_DOMAINS, compass31TotalFromWeighted } from '@/lib/clinical/compass31';
 import { ais8Label, gad7Label, phq9Label } from '@/lib/clinical/severity';
 import {
   trailRatio,
 } from '@/lib/clinical/cognitive';
-import { mbessTotal, mbessTotalFlag } from '@/lib/clinical/balance';
+import { formatFeet, mbessTotal, mbessTotalFlag } from '@/lib/clinical/balance';
 
 export const has = (v: unknown): boolean => {
   if (v == null) return false;
@@ -120,8 +117,8 @@ export interface CompassSummary {
 }
 
 /**
- * The summary sheet reports weighted domain scores and the weighted total
- * /100 (the validated scale); raw scores stay on the scoring page only.
+ * The report stores and prints weighted domain scores and the weighted total
+ * /100 (the validated scale). Raw scores are never shown.
  */
 export function buildCompass(report: ReportDocument): CompassSummary | null {
   const isPresent = (v: Record<string, number | null | undefined>) =>
@@ -132,16 +129,14 @@ export function buildCompass(report: ReportDocument): CompassSummary | null {
   const table = buildTable(report, report.compass.values, isPresent, (get) =>
     COMPASS31_DOMAINS.map((d) => ({
       label: d.domain,
-      values: tps.map((tp) =>
-        fmt(compass31DomainWeighted(d, get(tp)?.[d.key]), d.weightedMax),
-      ),
+      values: tps.map((tp) => fmt(get(tp)?.[d.key], d.weightedMax)),
     })),
   );
   if (!table) return null;
 
   const totals = tps.map((tp) => ({
     timePoint: tp,
-    weighted: compass31WeightedTotal(report.compass.values[tp]!),
+    weighted: compass31TotalFromWeighted(report.compass.values[tp]!),
   }));
 
   return { table, totals };
@@ -281,80 +276,86 @@ export function buildCognitive(report: ReportDocument): CompareTable | null {
   );
 }
 
-export function buildBalance(report: ReportDocument): CompareTable | null {
-  return buildTable(
-    report,
-    report.balance.values,
-    (v) => Object.values(v).some((x) => x != null && x !== ''),
-    (get) => {
-      const tps = presentTimePoints(report, report.balance.values, (v) =>
-        Object.values(v).some((x) => x != null && x !== ''),
+/** True when a balance time point has anything worth printing. */
+export function balanceHasContent(v: Partial<BalanceValues> | null | undefined): boolean {
+  if (!v) return false;
+  return Object.entries(v).some(([key, x]) => {
+    if (key === 'fukudaDisplacements')
+      return (x as BalanceValues['fukudaDisplacements']).some(
+        (d) => has(d.direction) || has(d.distance),
       );
-      return [
-        {
-          label: 'mBESS Double-Leg Stance',
-          values: tps.map((tp) => fmt(get(tp)?.mbessDoubleLeg, 10)),
-        },
-        {
-          label: 'mBESS Single-Leg Stance',
-          values: tps.map((tp) => fmt(get(tp)?.mbessSingleLeg, 10)),
-        },
-        {
-          label: 'mBESS Tandem Stance',
-          values: tps.map((tp) => fmt(get(tp)?.mbessTandem, 10)),
-        },
-        {
-          label: 'mBESS Total',
-          values: tps.map((tp) => {
-            const v = get(tp);
-            const total = mbessTotal(
-              v?.mbessDoubleLeg ?? null,
-              v?.mbessSingleLeg ?? null,
-              v?.mbessTandem ?? null,
-            );
-            return total != null ? `${total} / 30` : null;
-          }),
-          flags: tps.map((tp) => {
-            const v = get(tp);
-            return mbessTotalFlag(
-              mbessTotal(
-                v?.mbessDoubleLeg ?? null,
-                v?.mbessSingleLeg ?? null,
-                v?.mbessTandem ?? null,
-              ),
-            );
-          }),
-        },
-        {
-          label: 'Fukuda Rotation',
-          values: tps.map((tp) => {
-            const v = get(tp);
-            if (!v) return null;
-            const parts = [fmtText(v.fukudaRotationDirection), fmtText(v.fukudaDegrees ? `${v.fukudaDegrees}°` : '')].filter(
-              Boolean,
-            );
-            return parts.length ? parts.join(', ') : null;
-          }),
-        },
-        {
-          label: 'Fukuda Displacement',
-          values: tps.map((tp) => {
-            const v = get(tp);
-            if (!v) return null;
-            const parts = [
-              fmtText(v.fukudaDisplacementDirection),
-              fmtText(v.fukudaDisplacementDistance),
-            ].filter(Boolean);
-            return parts.length ? parts.join(', ') : null;
-          }),
-        },
-        {
-          label: 'Symptoms / Observations',
-          values: tps.map((tp) => fmtText(get(tp)?.symptoms)),
-        },
-      ];
-    },
-  );
+    return x != null && x !== '';
+  });
+}
+
+/** "Slow and mildly unsteady, 10 ft" — or the free-text description for Other. */
+function tandemGaitSummary(v: Partial<BalanceValues> | null): string | null {
+  if (!v) return null;
+  const quality = v.tandemGaitQuality === 'Other' ? v.tandemGaitOther : v.tandemGaitQuality;
+  const parts = [fmtText(quality), formatFeet(v.tandemGaitDistance)].filter(Boolean);
+  return parts.length ? parts.join(', ') : null;
+}
+
+/** "Forward 3 ft, Right 2 ft" — every direction the patient drifted. */
+function fukudaDisplacementSummary(v: Partial<BalanceValues> | null): string | null {
+  const parts = (v?.fukudaDisplacements ?? [])
+    .map((d) => [fmtText(d.direction), fmtText(d.distance)].filter(Boolean).join(' '))
+    .filter((p) => p !== '');
+  return parts.length ? parts.join(', ') : null;
+}
+
+export function buildBalance(report: ReportDocument): CompareTable | null {
+  return buildTable(report, report.balance.values, balanceHasContent, (get) => {
+    const tps = presentTimePoints(report, report.balance.values, balanceHasContent);
+    const total = (tp: TimePointKey) => {
+      const v = get(tp);
+      return mbessTotal(
+        v?.mbessDoubleLeg ?? null,
+        v?.mbessSingleLeg ?? null,
+        v?.mbessTandem ?? null,
+      );
+    };
+    return [
+      {
+        label: 'mBESS Double-Leg Stance (errors)',
+        values: tps.map((tp) => fmt(get(tp)?.mbessDoubleLeg, 10)),
+      },
+      {
+        label: 'mBESS Single-Leg Stance (errors)',
+        values: tps.map((tp) => fmt(get(tp)?.mbessSingleLeg, 10)),
+      },
+      {
+        label: 'mBESS Tandem Stance (errors)',
+        values: tps.map((tp) => fmt(get(tp)?.mbessTandem, 10)),
+      },
+      {
+        label: 'mBESS Total Errors',
+        values: tps.map((tp) => fmt(total(tp), 30)),
+        flags: tps.map((tp) => mbessTotalFlag(total(tp))),
+      },
+      { label: 'Tandem Gait', values: tps.map((tp) => tandemGaitSummary(get(tp))) },
+      {
+        label: 'Fukuda Rotation',
+        values: tps.map((tp) => {
+          const v = get(tp);
+          if (!v) return null;
+          const parts = [
+            fmtText(v.fukudaRotationDirection),
+            fmtText(v.fukudaDegrees ? `${v.fukudaDegrees}°` : ''),
+          ].filter(Boolean);
+          return parts.length ? parts.join(', ') : null;
+        }),
+      },
+      {
+        label: 'Fukuda Displacement',
+        values: tps.map((tp) => fukudaDisplacementSummary(get(tp))),
+      },
+      {
+        label: 'Symptoms / Observations',
+        values: tps.map((tp) => fmtText(get(tp)?.symptoms)),
+      },
+    ];
+  });
 }
 
 /* --------------------------------- Ocular ---------------------------------- */
@@ -522,6 +523,12 @@ export function buildPatientHeader(report: ReportDocument): HeaderItem[] {
   const items: HeaderItem[] = [];
   if (has(p.patientName)) items.push({ label: 'Patient', value: p.patientName });
   if (has(p.evaluationDate)) items.push({ label: 'Evaluation Date', value: p.evaluationDate });
+  if (report.reportType === 're-evaluation') {
+    if (has(p.initialEvalDate))
+      items.push({ label: 'Initial Evaluation Date', value: p.initialEvalDate });
+    if (has(p.lastReEvalDate))
+      items.push({ label: 'Last Re-evaluation Date', value: p.lastReEvalDate });
+  }
   if (has(p.age)) items.push({ label: 'Age', value: p.age });
   if (has(p.mrn)) items.push({ label: 'MRN / ID', value: p.mrn });
   if (has(p.providerName)) items.push({ label: 'Provider', value: p.providerName });

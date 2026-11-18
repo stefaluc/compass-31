@@ -1,3 +1,5 @@
+import { Button } from '@/components/ui/button';
+import { Plus, Trash2 } from 'lucide-react';
 import { useReportStore } from '../../store';
 import {
   activeTimePoints,
@@ -5,6 +7,7 @@ import {
   FUKUDA_ROTATION_OPTIONS,
   TIME_POINT_LABELS,
   type BalanceValues,
+  type FukudaDisplacement,
   type ReportDocument,
   type ThreePoint,
   type TimePointKey,
@@ -18,7 +21,14 @@ import {
   type MetricDef,
 } from '../fields';
 import { trailRatio } from '@/lib/clinical/cognitive';
-import { MBESS_TOTAL_MAX, mbessTotal, mbessTotalFlag } from '@/lib/clinical/balance';
+import {
+  MBESS_STANCE_MAX,
+  MBESS_TOTAL_MAX,
+  TANDEM_GAIT_OPTIONS,
+  mbessTotal,
+  mbessTotalFlag,
+} from '@/lib/clinical/balance';
+import { balanceHasContent } from '../../reportContent';
 import { cn } from '@/lib/utils';
 
 function setThreePointValue<V extends object>(
@@ -54,7 +64,6 @@ export function CognitiveSection({ report }: { report: ReportDocument }) {
   return (
     <SectionShell
       title="Cognitive Testing"
-      subtitle="Orientation intentionally omitted"
       hasContent={hasContent}
       interpretation={section.interpretation}
       onInterpretationChange={(v) =>
@@ -96,10 +105,70 @@ export function CognitiveSection({ report }: { report: ReportDocument }) {
 /* ----------------------- §7.9 Balance and Coordination ---------------------- */
 
 const MBESS_METRICS: MetricDef[] = [
-  { key: 'mbessDoubleLeg', label: 'mBESS Double-Leg Stance', max: 10 },
-  { key: 'mbessSingleLeg', label: 'mBESS Single-Leg Stance', max: 10 },
-  { key: 'mbessTandem', label: 'mBESS Tandem Stance', max: 10 },
+  { key: 'mbessDoubleLeg', label: 'mBESS Double-Leg Stance — errors', max: MBESS_STANCE_MAX },
+  { key: 'mbessSingleLeg', label: 'mBESS Single-Leg Stance — errors', max: MBESS_STANCE_MAX },
+  { key: 'mbessTandem', label: 'mBESS Tandem Stance — errors', max: MBESS_STANCE_MAX },
 ];
+
+const EMPTY_DISPLACEMENT: FukudaDisplacement = { direction: '', distance: '' };
+
+/** One row per direction the patient drifted, with add/remove controls. */
+function FukudaDisplacementList({
+  entries,
+  onChange,
+}: {
+  entries: FukudaDisplacement[];
+  onChange: (next: FukudaDisplacement[]) => void;
+}) {
+  // Always show one row so the first direction needs no extra click.
+  const rows = entries.length > 0 ? entries : [EMPTY_DISPLACEMENT];
+  const update = (i: number, p: Partial<FukudaDisplacement>) =>
+    onChange(rows.map((row, j) => (j === i ? { ...row, ...p } : row)));
+
+  return (
+    <div className="space-y-3">
+      {rows.map((row, i) => (
+        <div key={i} className="flex items-end gap-2">
+          <div className="grid flex-1 gap-4 sm:grid-cols-2">
+            <SelectField
+              label={`Fukuda Displacement Direction${rows.length > 1 ? ` ${i + 1}` : ''}`}
+              value={row.direction}
+              onChange={(s) => update(i, { direction: s })}
+              options={FUKUDA_DISPLACEMENT_OPTIONS}
+            />
+            <TextField
+              label={`Distance${rows.length > 1 ? ` ${i + 1}` : ''}`}
+              value={row.distance}
+              onChange={(s) => update(i, { distance: s })}
+              placeholder="e.g., 3 ft, 18 inches, minimal"
+            />
+          </div>
+          {rows.length > 1 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-9 w-9 shrink-0 p-0 text-destructive"
+              aria-label={`Remove displacement direction ${i + 1}`}
+              onClick={() => onChange(rows.filter((_, j) => j !== i))}
+            >
+              <Trash2 className="h-4 w-4" aria-hidden />
+            </Button>
+          )}
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => onChange([...rows, { ...EMPTY_DISPLACEMENT }])}
+      >
+        <Plus className="mr-1 h-3.5 w-3.5" aria-hidden />
+        Add Another Direction
+      </Button>
+    </div>
+  );
+}
 
 export function BalanceSection({ report }: { report: ReportDocument }) {
   const updateSection = useReportStore((s) => s.updateSection);
@@ -107,10 +176,8 @@ export function BalanceSection({ report }: { report: ReportDocument }) {
   const section = report.balance;
 
   const hasContent =
-    timePoints.some((tp) => {
-      const v = section.values[tp];
-      return v && Object.values(v).some((x) => x != null && x !== '');
-    }) || !!section.interpretation;
+    timePoints.some((tp) => balanceHasContent(section.values[tp])) ||
+    !!section.interpretation;
 
   const setField = (tp: TimePointKey, key: string, value: unknown) =>
     updateSection('balance', (cur) => ({
@@ -121,7 +188,7 @@ export function BalanceSection({ report }: { report: ReportDocument }) {
   return (
     <SectionShell
       title="Balance and Coordination"
-      subtitle="mBESS and Fukuda step test"
+      subtitle="mBESS, tandem gait, and Fukuda step test"
       hasContent={hasContent}
       interpretation={section.interpretation}
       onInterpretationChange={(v) =>
@@ -152,7 +219,7 @@ export function BalanceSection({ report }: { report: ReportDocument }) {
                 </p>
               )}
               <p className={cn('font-bold tabular-nums', flagged && 'text-destructive')}>
-                mBESS Total: {total} / {MBESS_TOTAL_MAX}
+                mBESS Total Errors: {total} / {MBESS_TOTAL_MAX}
                 {flagged && ' ▲'}
               </p>
             </div>
@@ -160,8 +227,8 @@ export function BalanceSection({ report }: { report: ReportDocument }) {
         })}
       </div>
       <p className="text-xs text-muted-foreground">
-        Scoring convention pending clinical confirmation (CV-02): entered as points
-        earned out of 10 per stance; totals below 20 are flagged.
+        Enter the number of errors in each stance (maximum 10). The total is errors
+        out of 30 — lower is better. Totals above 10 errors are flagged.
       </p>
 
       {timePoints.map((tp) => {
@@ -170,8 +237,29 @@ export function BalanceSection({ report }: { report: ReportDocument }) {
           <div key={tp} className="space-y-4">
             {timePoints.length > 1 && (
               <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                Fukuda — {TIME_POINT_LABELS[tp]}
+                Tandem Gait and Fukuda — {TIME_POINT_LABELS[tp]}
               </p>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField
+                label="Tandem Gait Distance (ft)"
+                value={v.tandemGaitDistance ?? ''}
+                onChange={(s) => setField(tp, 'tandemGaitDistance', s)}
+                placeholder="e.g., 10"
+              />
+              <SelectField
+                label="Tandem Gait Quality"
+                value={v.tandemGaitQuality ?? ''}
+                onChange={(s) => setField(tp, 'tandemGaitQuality', s)}
+                options={TANDEM_GAIT_OPTIONS}
+              />
+            </div>
+            {v.tandemGaitQuality === 'Other' && (
+              <TextField
+                label="Describe tandem gait"
+                value={v.tandemGaitOther ?? ''}
+                onChange={(s) => setField(tp, 'tandemGaitOther', s)}
+              />
             )}
             <div className="grid gap-4 sm:grid-cols-2">
               <SelectField
@@ -186,19 +274,11 @@ export function BalanceSection({ report }: { report: ReportDocument }) {
                 onChange={(s) => setField(tp, 'fukudaDegrees', s)}
                 placeholder="e.g., 45"
               />
-              <SelectField
-                label="Fukuda Displacement Direction"
-                value={v.fukudaDisplacementDirection ?? ''}
-                onChange={(s) => setField(tp, 'fukudaDisplacementDirection', s)}
-                options={FUKUDA_DISPLACEMENT_OPTIONS}
-              />
-              <TextField
-                label="Fukuda Displacement Distance"
-                value={v.fukudaDisplacementDistance ?? ''}
-                onChange={(s) => setField(tp, 'fukudaDisplacementDistance', s)}
-                placeholder="e.g., 18 inches, 45 cm, minimal"
-              />
             </div>
+            <FukudaDisplacementList
+              entries={v.fukudaDisplacements ?? []}
+              onChange={(next) => setField(tp, 'fukudaDisplacements', next)}
+            />
             <TextField
               label="Symptoms or Observations"
               value={v.symptoms ?? ''}

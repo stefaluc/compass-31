@@ -29,6 +29,7 @@ import {
 import { OcularSection } from './sections/OcularSection';
 import {
   CranialNerveSection,
+  MusculoskeletalSection,
   RecommendationsSection,
   SpecialTestsSection,
 } from './sections/FinalSections';
@@ -91,6 +92,7 @@ export function ReportForm({ report }: { report: ReportDocument }) {
       <OcularSection report={report} />
       <BeightonSection report={report} />
       <CranialNerveSection report={report} />
+      <MusculoskeletalSection report={report} />
       <SpecialTestsSection report={report} />
       <RecommendationsSection report={report} />
 

@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   COMPASS31_DOMAINS,
+  compass31ChartText,
   compass31DomainWeighted,
   compass31RawTotal,
+  compass31TotalFromWeighted,
+  compass31WeightedScores,
   compass31WeightedTotal,
 } from './compass31';
 import { COMPASS_QUESTIONNAIRE } from '@/features/compass31/questions';
@@ -20,7 +23,7 @@ import {
   trailRatio,
   trailRatioFlag,
 } from './cognitive';
-import { mbessTotal, mbessTotalFlag } from './balance';
+import { formatFeet, mbessTotal, mbessTotalFlag } from './balance';
 import { computeLeanStats, meetsPotsDeltaCriteria } from './nasaLean';
 
 /** Sletten et al. 2012, Table 3: [questions, max raw, weighting factor, max weighted]. */
@@ -78,6 +81,45 @@ describe('COMPASS-31', () => {
       expect(compass31DomainWeighted(d, d.maxScore)).toBeCloseTo(d.weightedMax, 0);
     }
     expect(COMPASS31_DOMAINS.reduce((s, d) => s + d.weightedMax, 0)).toBe(100);
+  });
+
+  it('total is the sum of the weighted domain scores as displayed', () => {
+    const raw = {
+      orthostaticIntolerance: 5,
+      vasomotor: 1,
+      secretomotor: 1,
+      gastrointestinal: 1,
+      bladder: 1,
+      pupillomotor: 1,
+    };
+    const weighted = compass31WeightedScores(raw);
+    expect(weighted).toEqual({
+      orthostaticIntolerance: 20,
+      vasomotor: 0.8,
+      secretomotor: 2.1,
+      gastrointestinal: 0.9,
+      bladder: 1.1,
+      pupillomotor: 0.3,
+    });
+    expect(compass31TotalFromWeighted(weighted)).toBe(25.2);
+    // the scorer (from raw answers) and the report (from weighted entries) agree
+    expect(compass31WeightedTotal(raw)).toBe(25.2);
+  });
+
+  it('formats scores as chart text, one domain per line', () => {
+    expect(
+      compass31ChartText({ orthostaticIntolerance: 20, vasomotor: 0.8, bladder: 1.1 }),
+    ).toBe(
+      [
+        'Orthostatic Intolerance: 20/40',
+        'Vasomotor: 0.8/5',
+        'Secretomotor: 0/15',
+        'Gastrointestinal: 0/25',
+        'Bladder: 1.1/10',
+        'Pupillomotor: 0/5',
+        'Total: 21.9/100',
+      ].join('\n'),
+    );
   });
 
   it('per-domain weighted score is null when raw is missing', () => {
@@ -202,16 +244,27 @@ describe('cognitive flags (clinic-defined)', () => {
   });
 });
 
-describe('mBESS (CV-02 best guess: points earned, higher is better)', () => {
-  it('totals three stances', () => {
-    expect(mbessTotal(10, 7, 5)).toBe(22);
+describe('mBESS (CV-02: error counts, lower is better)', () => {
+  it('totals errors across three stances', () => {
+    expect(mbessTotal(0, 5, 3)).toBe(8);
     expect(mbessTotal(null, null, null)).toBeNull();
-    expect(mbessTotal(10, null, null)).toBe(10);
+    expect(mbessTotal(2, null, null)).toBe(2);
   });
-  it('red below 20', () => {
-    expect(mbessTotalFlag(19)).toBe(true);
-    expect(mbessTotalFlag(20)).toBe(false);
+  it('red above 10 errors', () => {
+    expect(mbessTotalFlag(11)).toBe(true);
+    expect(mbessTotalFlag(10)).toBe(false);
+    expect(mbessTotalFlag(0)).toBe(false);
     expect(mbessTotalFlag(null)).toBe(false);
+  });
+});
+
+describe('tandem gait distance', () => {
+  it('adds feet to a bare number and leaves other wording alone', () => {
+    expect(formatFeet('10')).toBe('10 ft');
+    expect(formatFeet(' 7.5 ')).toBe('7.5 ft');
+    expect(formatFeet('10 ft')).toBe('10 ft');
+    expect(formatFeet('')).toBeNull();
+    expect(formatFeet(undefined)).toBeNull();
   });
 });
 

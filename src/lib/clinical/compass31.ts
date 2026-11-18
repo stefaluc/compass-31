@@ -2,9 +2,9 @@
  * COMPASS-31 scoring.
  *
  * CV-01 (resolved): the validated instrument (Sletten et al. 2012) uses
- * weighted scoring totaling /100, and that is the primary figure everywhere.
- * Raw domain scores (/75 total) remain visible on the scoring page as entry
- * support but are omitted from the final summary PDF.
+ * weighted scoring totaling /100. Only weighted scores are shown — on the
+ * scoring page, in the report generators, and in the PDF. Raw domain scores
+ * (/75 total) are an internal step of the calculation and never displayed.
  */
 
 export interface Compass31DomainScore {
@@ -34,18 +34,14 @@ export const COMPASS31_WEIGHTED_MAX = 100;
 
 export type Compass31DomainScores = Partial<Record<Compass31DomainKey, number | null>>;
 
-/** Raw total: simple sum of domain raw scores (max 75). */
+/** Weighted domain scores as they are displayed, charted, and stored in reports. */
+export type Compass31WeightedScores = Partial<Record<Compass31DomainKey, number | null>>;
+
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
+/** Raw total: simple sum of domain raw scores (max 75). Scoring internals only. */
 export function compass31RawTotal(scores: Compass31DomainScores): number {
   return COMPASS31_DOMAINS.reduce((sum, d) => sum + (scores[d.key] ?? 0), 0);
-}
-
-/** Weighted total per the validated instrument (max 100). */
-export function compass31WeightedTotal(scores: Compass31DomainScores): number {
-  const total = COMPASS31_DOMAINS.reduce(
-    (sum, d) => sum + (scores[d.key] ?? 0) * d.weight,
-    0,
-  );
-  return Math.round(total * 10) / 10;
 }
 
 /** Weighted score for one domain (raw × weight), rounded to one decimal. */
@@ -54,5 +50,42 @@ export function compass31DomainWeighted(
   raw: number | null | undefined,
 ): number | null {
   if (raw == null) return null;
-  return Math.round(raw * domain.weight * 10) / 10;
+  return round1(raw * domain.weight);
+}
+
+/** Raw domain scores → weighted domain scores (one decimal each). */
+export function compass31WeightedScores(raw: Compass31DomainScores): Compass31WeightedScores {
+  const out: Compass31WeightedScores = {};
+  for (const d of COMPASS31_DOMAINS) {
+    const w = compass31DomainWeighted(d, raw[d.key]);
+    if (w != null) out[d.key] = w;
+  }
+  return out;
+}
+
+/**
+ * Total /100 from weighted domain scores. The total is the sum of the domain
+ * scores exactly as shown (one decimal each), so the six lines a provider
+ * charts always add up to the total beside them, and a total re-entered from
+ * a prior report matches the one computed by the scorer.
+ */
+export function compass31TotalFromWeighted(weighted: Compass31WeightedScores): number {
+  return round1(COMPASS31_DOMAINS.reduce((sum, d) => sum + (weighted[d.key] ?? 0), 0));
+}
+
+/** Weighted total per the validated instrument (max 100), from raw domain scores. */
+export function compass31WeightedTotal(scores: Compass31DomainScores): number {
+  return compass31TotalFromWeighted(compass31WeightedScores(scores));
+}
+
+/**
+ * Plain-text block for pasting into the chart: one "Domain: score/max" line
+ * per domain, then the total. Missing domains count as 0.
+ */
+export function compass31ChartText(weighted: Compass31WeightedScores): string {
+  const lines = COMPASS31_DOMAINS.map(
+    (d) => `${d.domain}: ${weighted[d.key] ?? 0}/${d.weightedMax}`,
+  );
+  lines.push(`Total: ${compass31TotalFromWeighted(weighted)}/${COMPASS31_WEIGHTED_MAX}`);
+  return lines.join('\n');
 }

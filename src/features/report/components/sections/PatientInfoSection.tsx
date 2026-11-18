@@ -1,6 +1,6 @@
 import { useReportStore } from '../../store';
 import { ETIOLOGY_OPTIONS, type ReportDocument } from '../../types';
-import { MultiCheckField, NumField, TextField } from '../fields';
+import { MultiCheckField, NumField, TextAreaField, TextField } from '../fields';
 import { SectionShell } from '../SectionShell';
 
 export function PatientInfoSection({ report }: { report: ReportDocument }) {
@@ -45,6 +45,30 @@ export function PatientInfoSection({ report }: { report: ReportDocument }) {
           onChange={(v) => patch({ providerName: v })}
         />
       </div>
+
+      {report.reportType === 're-evaluation' && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextField
+            label="Initial Evaluation Date"
+            type="date"
+            value={patient.initialEvalDate}
+            onChange={(v) => patch({ initialEvalDate: v })}
+          />
+          <TextField
+            label="Last Re-evaluation Date"
+            type="date"
+            value={patient.lastReEvalDate}
+            onChange={(v) => patch({ lastReEvalDate: v })}
+          />
+        </div>
+      )}
+
+      <TextAreaField
+        label="Brief Case History"
+        value={patient.caseHistory}
+        onChange={(v) => patch({ caseHistory: v })}
+        placeholder="Presenting complaint, relevant history, and course to date…"
+      />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <NumField

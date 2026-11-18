@@ -6,7 +6,6 @@ import { useReportStore } from '../../store';
 import {
   activeTimePoints,
   TIME_POINT_LABELS,
-  type CompassDomainValues,
   type ReportDocument,
   type ThreePoint,
   type TimePointKey,
@@ -19,10 +18,10 @@ import {
 } from '../fields';
 import {
   COMPASS31_DOMAINS,
-  COMPASS31_RAW_MAX,
   COMPASS31_WEIGHTED_MAX,
-  compass31RawTotal,
-  compass31WeightedTotal,
+  compass31TotalFromWeighted,
+  compass31WeightedScores,
+  type Compass31DomainScores,
 } from '@/lib/clinical/compass31';
 import {
   AIS8_MAX,
@@ -109,7 +108,7 @@ export function GradedSymptomsSection({ report }: { report: ReportDocument }) {
 const COMPASS_METRICS: MetricDef[] = COMPASS31_DOMAINS.map((d) => ({
   key: d.key,
   label: d.domain,
-  max: d.maxScore,
+  max: d.weightedMax,
 }));
 
 export function CompassSection({ report }: { report: ReportDocument }) {
@@ -131,11 +130,11 @@ export function CompassSection({ report }: { report: ReportDocument }) {
 
   /** CP-01: automatic transfer from the COMPASS-31 scorer into `current`. */
   const transferFromScorer = () => {
-    const scores: CompassDomainValues = {};
-    for (const d of COMPASS_QUESTIONNAIRE) scores[d.key] = domainScore(d, compassAnswers);
+    const raw: Compass31DomainScores = {};
+    for (const d of COMPASS_QUESTIONNAIRE) raw[d.key] = domainScore(d, compassAnswers);
     updateSection('compass', (cur) => ({
       ...cur,
-      values: { ...cur.values, current: scores },
+      values: { ...cur.values, current: compass31WeightedScores(raw) },
     }));
     toast.success('COMPASS-31 domain scores transferred from the scorer');
   };
@@ -174,13 +173,17 @@ export function CompassSection({ report }: { report: ReportDocument }) {
         }
       />
 
-      {/* CV-01: weighted /100 is the primary figure; raw /75 shown as entry support. */}
+      <p className="text-xs text-muted-foreground">
+        Enter weighted domain scores, as shown on the COMPASS-31 scoring page and
+        on prior reports.
+      </p>
+
+      {/* CV-01: weighted scores only; the total is the sum of the six domains. */}
       <div className="grid gap-2 sm:grid-cols-3">
         {timePoints.map((tp) => {
           const v = section.values[tp];
           if (!v || !COMPASS31_DOMAINS.some((d) => v[d.key] != null)) return null;
-          const raw = compass31RawTotal(v);
-          const weighted = compass31WeightedTotal(v);
+          const weighted = compass31TotalFromWeighted(v);
           return (
             <div key={tp} className="rounded-lg bg-muted p-3 text-sm">
               {timePoints.length > 1 && (
@@ -190,9 +193,6 @@ export function CompassSection({ report }: { report: ReportDocument }) {
               )}
               <p className="font-bold tabular-nums">
                 Total: {weighted} / {COMPASS31_WEIGHTED_MAX}
-              </p>
-              <p className="text-muted-foreground tabular-nums">
-                Raw: {raw} / {COMPASS31_RAW_MAX}
               </p>
             </div>
           );

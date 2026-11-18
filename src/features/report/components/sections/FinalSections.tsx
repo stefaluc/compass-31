@@ -84,6 +84,33 @@ export function CranialNerveSection({ report }: { report: ReportDocument }) {
   );
 }
 
+/* ------------------------ Musculoskeletal Findings -------------------------- */
+
+export function MusculoskeletalSection({ report }: { report: ReportDocument }) {
+  const updateSection = useReportStore((s) => s.updateSection);
+  const section = report.musculoskeletal;
+
+  return (
+    <SectionShell
+      title="Musculoskeletal Findings"
+      hasContent={!!section.findings.trim() || !!section.interpretation.trim()}
+      interpretation={section.interpretation}
+      onInterpretationChange={(v) =>
+        updateSection('musculoskeletal', (cur) => ({ ...cur, interpretation: v }))
+      }
+    >
+      <TextAreaField
+        label="Findings"
+        value={section.findings}
+        onChange={(v) =>
+          updateSection('musculoskeletal', (cur) => ({ ...cur, findings: v }))
+        }
+        placeholder="Posture, range of motion, palpation, strength, orthopedic findings…"
+      />
+    </SectionShell>
+  );
+}
+
 /* ---------------------------- §7.13 Special Tests --------------------------- */
 
 export function SpecialTestsSection({ report }: { report: ReportDocument }) {

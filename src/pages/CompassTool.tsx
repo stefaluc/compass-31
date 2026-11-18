@@ -21,8 +21,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Info, FileText, RotateCcw } from 'lucide-react';
+import { Check, Copy, Info, FileText, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+import { copyText } from '@/lib/utils';
 import {
   COMPASS_QUESTIONNAIRE,
   TOTAL_QUESTIONS,
@@ -35,13 +36,16 @@ import {
 import { useCompassStore } from '@/features/compass31/store';
 import {
   COMPASS31_DOMAINS,
-  COMPASS31_RAW_MAX,
   COMPASS31_WEIGHTED_MAX,
-  compass31DomainWeighted,
-  compass31RawTotal,
-  compass31WeightedTotal,
+  compass31ChartText,
+  compass31TotalFromWeighted,
+  compass31WeightedScores,
   type Compass31DomainScores,
 } from '@/lib/clinical/compass31';
+
+const WEIGHTED_MAX_BY_KEY = Object.fromEntries(
+  COMPASS31_DOMAINS.map((d) => [d.key, d.weightedMax]),
+);
 
 function QuestionRow({
   question,
@@ -101,24 +105,36 @@ function QuestionRow({
 function CompassTool() {
   const { answers, setAnswer, reset } = useCompassStore();
   const [showScore, setShowScore] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const domainScores = useMemo(() => {
-    const scores: Compass31DomainScores = {};
-    for (const d of COMPASS_QUESTIONNAIRE) scores[d.key] = domainScore(d, answers);
-    return scores;
+  // Only weighted scores are shown anywhere; raw points are an internal step.
+  const weightedScores = useMemo(() => {
+    const raw: Compass31DomainScores = {};
+    for (const d of COMPASS_QUESTIONNAIRE) raw[d.key] = domainScore(d, answers);
+    return compass31WeightedScores(raw);
   }, [answers]);
 
   const done = questionsDone(
     COMPASS_QUESTIONNAIRE.flatMap((d) => d.questions),
     answers,
   );
-  const rawTotal = compass31RawTotal(domainScores);
-  const weightedTotal = compass31WeightedTotal(domainScores);
+  const weightedTotal = compass31TotalFromWeighted(weightedScores);
+  const chartText = compass31ChartText(weightedScores);
 
   const handleReset = () => {
     reset();
     setShowScore(false);
     toast.info('Ready for a new COMPASS-31 survey');
+  };
+
+  const copyScores = async () => {
+    if (await copyText(chartText)) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success('Scores copied — paste into the chart');
+    } else {
+      toast.error('Could not copy the scores — check clipboard permissions');
+    }
   };
 
   return (
@@ -142,14 +158,14 @@ function CompassTool() {
         {COMPASS_QUESTIONNAIRE.map((domain) => {
           const doneInDomain = questionsDone(domain.questions, answers);
           const complete = doneInDomain === domain.questions.length;
-          const score = domainScores[domain.key] ?? 0;
+          const score = weightedScores[domain.key] ?? 0;
 
           return (
             <Card key={domain.key}>
               <CardHeader className="flex-row items-center justify-between space-y-0">
                 <CardTitle className="text-lg sm:text-xl">{domain.domain}</CardTitle>
                 <Badge variant={complete ? 'default' : 'outline'} className="tabular-nums">
-                  {score} / {domain.maxScore}
+                  {score} / {WEIGHTED_MAX_BY_KEY[domain.key]}
                 </Badge>
               </CardHeader>
               <Separator />
@@ -190,33 +206,35 @@ function CompassTool() {
             <TableHeader>
               <TableRow>
                 <TableHead>Domain</TableHead>
-                <TableHead className="text-right">Raw</TableHead>
-                <TableHead className="text-right">Weighted</TableHead>
+                <TableHead className="text-right">Score</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {COMPASS31_DOMAINS.map((d) => (
                 <TableRow key={d.key}>
                   <TableCell>{d.domain}</TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">
-                    {domainScores[d.key] ?? 0} / {d.maxScore}
-                  </TableCell>
                   <TableCell className="text-right font-medium tabular-nums">
-                    {compass31DomainWeighted(d, domainScores[d.key] ?? 0)} / {d.weightedMax}
+                    {weightedScores[d.key] ?? 0} / {d.weightedMax}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
 
-          <div className="space-y-1 rounded-lg bg-muted p-4 text-right">
+          <div className="rounded-lg bg-muted p-4 text-right">
             <p className="text-xl font-bold tabular-nums">
               Total: {weightedTotal} / {COMPASS31_WEIGHTED_MAX}
             </p>
-            <p className="text-sm text-muted-foreground tabular-nums">
-              Raw: {rawTotal} / {COMPASS31_RAW_MAX}
-            </p>
           </div>
+
+          <Button variant="outline" className="w-full" onClick={copyScores}>
+            {copied ? (
+              <Check className="mr-2 h-4 w-4" aria-hidden />
+            ) : (
+              <Copy className="mr-2 h-4 w-4" aria-hidden />
+            )}
+            {copied ? 'Copied' : 'Copy scores for chart'}
+          </Button>
 
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowScore(false)}>
